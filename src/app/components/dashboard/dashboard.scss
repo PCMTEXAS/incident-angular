@@ -1,0 +1,46 @@
+$dc-blue: #0057A8;
+
+.stat-card { transition: transform 0.15s, box-shadow 0.15s; }
+.stat-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.12) !important; }
+
+.incident-table {
+  th { font-size: 0.8rem; letter-spacing: 0.03em; white-space: nowrap; }
+  td { font-size: 0.85rem; }
+  .sortable { cursor: pointer; user-select: none; &:hover { background: rgba(255,255,255,0.1); } }
+}
+
+.cursor-pointer { cursor: pointer; }
+
+.status-select { min-width: 120px; font-size: 0.78rem; padding: 0.2rem 0.5rem; }
+
+// Slide-in detail panel
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 1050;
+  display: flex; align-items: flex-start; justify-content: flex-end;
+}
+
+.modal-panel {
+  background: white;
+  width: min(700px, 95vw);
+  height: 100vh;
+  display: flex; flex-direction: column;
+  box-shadow: -4px 0 30px rgba(0,0,0,0.25);
+  animation: slideIn 0.25s ease;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.modal-header-custom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  flex-shrink: 0;
+}
+
+.modal-body-scroll { overflow-y: auto; flex: 1; }

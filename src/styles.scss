@@ -1,0 +1,46 @@
+// Global styles — Bootstrap loaded via angular.json
+
+$dc-blue: #0057A8;
+
+body {
+  background: #f4f6f9;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+// Override Bootstrap primary color via CSS custom properties
+:root {
+  --bs-primary: #{$dc-blue};
+  --bs-primary-rgb: 0, 87, 168;
+  --bs-link-color: #{$dc-blue};
+}
+
+.btn-primary {
+  background-color: $dc-blue;
+  border-color: $dc-blue;
+  &:hover, &:focus, &:active {
+    background-color: darken($dc-blue, 8%);
+    border-color: darken($dc-blue, 8%);
+  }
+}
+
+.btn-outline-primary {
+  color: $dc-blue;
+  border-color: $dc-blue;
+  &:hover { background-color: $dc-blue; border-color: $dc-blue; }
+}
+
+.text-primary { color: $dc-blue !important; }
+.bg-primary { background-color: $dc-blue !important; }
+.border-primary { border-color: $dc-blue !important; }
+.form-control:focus, .form-select:focus {
+  border-color: $dc-blue;
+  box-shadow: 0 0 0 0.2rem rgba(0, 87, 168, 0.25);
+}
+
+.progress-bar { background-color: $dc-blue !important; }
+.page-item.active .page-link { background-color: $dc-blue; border-color: $dc-blue; }
+.page-link { color: $dc-blue; }
+
+.table > :not(caption) > * > * { vertical-align: middle; }
+.border-2 { border-width: 2px !important; }
+.border-dashed { border-style: dashed !important; }

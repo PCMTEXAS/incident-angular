@@ -1,0 +1,308 @@
+<!-- ══ NAV BAR ══════════════════════════════════════════════════════════ -->
+<nav class="navbar navbar-dark py-2 shadow-sm" style="background-color:#0057A8">
+  <div class="container-fluid px-4">
+    <span class="navbar-brand d-flex align-items-center gap-2 fw-bold">
+      <i class="bi bi-speedometer2 fs-5"></i>
+      EHS Dashboard
+    </span>
+    <div class="d-flex gap-2">
+      <a class="btn btn-sm btn-outline-light" routerLink="/form">
+        <i class="bi bi-plus-circle me-1"></i>New Incident
+      </a>
+      <button class="btn btn-sm btn-outline-light" (click)="loadData()">
+        <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+      </button>
+      <button class="btn btn-sm btn-outline-light" (click)="logout()">
+        <i class="bi bi-box-arrow-right me-1"></i>Logout
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid py-4 px-3 px-md-4">
+
+  <!-- ── LOADING / ERROR ───────────────────────────────────── -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status" style="width:3rem;height:3rem"></div>
+    <p class="text-muted mt-3">Loading incidents from Supabase…</p>
+  </div>
+
+  <div *ngIf="error && !loading" class="alert alert-danger d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-circle-fill fs-5"></i>
+    <span>{{ error }}</span>
+    <button class="btn btn-sm btn-danger ms-auto" (click)="loadData()">Retry</button>
+  </div>
+
+  <div *ngIf="!loading && !error">
+
+    <!-- ── STAT CARDS ────────────────────────────────────────── -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-sm-3">
+        <div class="card stat-card border-0 shadow-sm h-100 text-center p-3">
+          <i class="bi bi-clipboard-data fs-2 text-primary mb-2"></i>
+          <div class="display-6 fw-bold">{{ stats.total }}</div>
+          <div class="text-muted small">Total Incidents</div>
+        </div>
+      </div>
+      <div class="col-6 col-sm-3">
+        <div class="card stat-card border-0 shadow-sm h-100 text-center p-3">
+          <i class="bi bi-exclamation-circle fs-2 text-danger mb-2"></i>
+          <div class="display-6 fw-bold text-danger">{{ stats.open }}</div>
+          <div class="text-muted small">Open / In Progress</div>
+        </div>
+      </div>
+      <div class="col-6 col-sm-3">
+        <div class="card stat-card border-0 shadow-sm h-100 text-center p-3">
+          <i class="bi bi-shield-exclamation fs-2 text-warning mb-2"></i>
+          <div class="display-6 fw-bold text-warning">{{ stats.recordable }}</div>
+          <div class="text-muted small">OSHA Recordable</div>
+        </div>
+      </div>
+      <div class="col-6 col-sm-3">
+        <div class="card stat-card border-0 shadow-sm h-100 text-center p-3">
+          <i class="bi bi-calendar-month fs-2 text-success mb-2"></i>
+          <div class="display-6 fw-bold text-success">{{ stats.thisMonth }}</div>
+          <div class="text-muted small">This Month</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── FILTERS ───────────────────────────────────────────── -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body p-3">
+        <div class="row g-2 align-items-end">
+          <div class="col-12 col-sm-6 col-md-3 col-lg-2">
+            <label class="form-label small fw-semibold mb-1">Search</label>
+            <input class="form-control form-control-sm" [(ngModel)]="searchText"
+                   (ngModelChange)="applyFilters()" placeholder="ID, name, site…">
+          </div>
+          <div class="col-6 col-sm-3 col-md-2 col-lg-2">
+            <label class="form-label small fw-semibold mb-1">Status</label>
+            <select class="form-select form-select-sm" [(ngModel)]="filterStatus" (change)="applyFilters()">
+              <option *ngFor="let s of STATUSES" [value]="s">{{ s || 'All Statuses' }}</option>
+            </select>
+          </div>
+          <div class="col-6 col-sm-3 col-md-2 col-lg-2">
+            <label class="form-label small fw-semibold mb-1">Type</label>
+            <select class="form-select form-select-sm" [(ngModel)]="filterType" (change)="applyFilters()">
+              <option *ngFor="let t of INCIDENT_TYPES" [value]="t">{{ t ? typeLabel(t) : 'All Types' }}</option>
+            </select>
+          </div>
+          <div class="col-6 col-sm-3 col-md-2 col-lg-2">
+            <label class="form-label small fw-semibold mb-1">Site</label>
+            <select class="form-select form-select-sm" [(ngModel)]="filterSite" (change)="applyFilters()">
+              <option *ngFor="let s of SITES" [value]="s">{{ s || 'All Sites' }}</option>
+            </select>
+          </div>
+          <div class="col-6 col-sm-3 col-md-2 col-lg-2">
+            <label class="form-label small fw-semibold mb-1">From</label>
+            <input class="form-control form-control-sm" type="date" [(ngModel)]="filterFrom" (change)="applyFilters()">
+          </div>
+          <div class="col-6 col-sm-3 col-md-2 col-lg-1">
+            <label class="form-label small fw-semibold mb-1">To</label>
+            <input class="form-control form-control-sm" type="date" [(ngModel)]="filterTo" (change)="applyFilters()">
+          </div>
+          <div class="col-auto d-flex gap-2">
+            <button class="btn btn-sm btn-outline-secondary" (click)="clearFilters()" title="Clear filters">
+              <i class="bi bi-x-circle"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── EXPORT BUTTONS ────────────────────────────────────── -->
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <span class="text-muted small">
+        Showing <strong>{{ pagedIncidents.length }}</strong> of <strong>{{ filteredIncidents.length }}</strong> incidents
+      </span>
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-outline-warning fw-semibold" (click)="exportOsha300()">
+          <i class="bi bi-file-earmark-spreadsheet me-1"></i>OSHA 300 Export
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" (click)="exportAll()">
+          <i class="bi bi-download me-1"></i>Export CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- ── TABLE ─────────────────────────────────────────────── -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 incident-table">
+          <thead class="table-dark" style="--bs-table-bg:#0057A8">
+            <tr>
+              <th class="sortable" (click)="sort('incident_id')">
+                Case # <i class="bi ms-1" [ngClass]="sortIcon('incident_id')"></i>
+              </th>
+              <th class="sortable" (click)="sort('incident_date')">
+                Date <i class="bi ms-1" [ngClass]="sortIcon('incident_date')"></i>
+              </th>
+              <th class="sortable" (click)="sort('incident_type')">
+                Type <i class="bi ms-1" [ngClass]="sortIcon('incident_type')"></i>
+              </th>
+              <th>Involved Person</th>
+              <th class="sortable" (click)="sort('incident_site')">
+                Site <i class="bi ms-1" [ngClass]="sortIcon('incident_site')"></i>
+              </th>
+              <th>Urgency</th>
+              <th class="sortable" (click)="sort('status')">
+                Status <i class="bi ms-1" [ngClass]="sortIcon('status')"></i>
+              </th>
+              <th>OSHA</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="!pagedIncidents.length">
+              <td colspan="9" class="text-center py-5 text-muted">
+                <i class="bi bi-inbox display-6 d-block mb-2"></i>
+                No incidents match the current filters
+              </td>
+            </tr>
+            <tr *ngFor="let inc of pagedIncidents" class="cursor-pointer" (click)="openDetail(inc)">
+              <td>
+                <span class="fw-semibold text-primary">{{ inc.incident_id }}</span>
+              </td>
+              <td>
+                <span class="small">{{ inc.incident_date || '—' }}</span>
+              </td>
+              <td>
+                <span class="badge bg-secondary text-capitalize">{{ typeLabel(inc.incident_type) }}</span>
+              </td>
+              <td>
+                <span class="small">{{ inc.involved_first }} {{ inc.involved_last }}</span>
+                <div class="text-muted" style="font-size:0.72rem">{{ inc.department }}</div>
+              </td>
+              <td class="small">{{ inc.incident_site || '—' }}</td>
+              <td>
+                <span class="badge" [ngClass]="urgencyBadge(inc.urgency)" style="font-size:0.7rem">
+                  {{ inc.urgency | titlecase }}
+                </span>
+              </td>
+              <td>
+                <select class="form-select form-select-sm status-select"
+                        [value]="inc.status"
+                        (change)="updateStatus(inc, $any($event.target).value)"
+                        (click)="$event.stopPropagation()"
+                        [disabled]="updatingId === inc.id">
+                  <option *ngFor="let s of STATUSES.slice(1)" [value]="s">{{ s }}</option>
+                </select>
+              </td>
+              <td>
+                <span *ngIf="inc.osha_recordable" class="badge bg-warning text-dark" style="font-size:0.7rem">
+                  <i class="bi bi-exclamation-triangle me-1"></i>Recordable
+                </span>
+                <span *ngIf="!inc.osha_recordable" class="text-muted small">—</span>
+              </td>
+              <td (click)="$event.stopPropagation()">
+                <button class="btn btn-sm btn-outline-primary py-0" (click)="openDetail(inc)">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── PAGINATION ────────────────────────────────────────── -->
+    <nav *ngIf="totalPages > 1">
+      <ul class="pagination pagination-sm justify-content-center">
+        <li class="page-item" [class.disabled]="currentPage === 1">
+          <button class="page-link" (click)="currentPage = currentPage - 1">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+        </li>
+        <li *ngFor="let p of pages" class="page-item" [class.active]="currentPage === p">
+          <button class="page-link" (click)="currentPage = p">{{ p }}</button>
+        </li>
+        <li class="page-item" [class.disabled]="currentPage === totalPages">
+          <button class="page-link" (click)="currentPage = currentPage + 1">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </li>
+      </ul>
+    </nav>
+
+  </div><!-- /!loading -->
+</div><!-- /container -->
+
+<!-- ══ INCIDENT DETAIL MODAL ══════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="selectedIncident" (click)="closeDetail()">
+  <div class="modal-panel" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom" style="background:#0057A8">
+      <div class="d-flex align-items-center gap-2 text-white">
+        <i class="bi bi-clipboard-data fs-5"></i>
+        <span class="fw-bold">{{ selectedIncident.incident_id }}</span>
+        <span class="badge ms-2" [ngClass]="statusBadge(selectedIncident.status)">
+          {{ selectedIncident.status }}
+        </span>
+      </div>
+      <button class="btn btn-sm btn-outline-light" (click)="closeDetail()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="modal-body-scroll p-4">
+      <div class="row g-3">
+        <div class="col-sm-6">
+          <h6 class="fw-bold text-primary">Incident Details</h6>
+          <table class="table table-sm table-borderless">
+            <tr><td class="text-muted">Type</td><td class="text-capitalize">{{ typeLabel(selectedIncident.incident_type) }}</td></tr>
+            <tr><td class="text-muted">Date</td><td>{{ selectedIncident.incident_date }} {{ selectedIncident.incident_time }}</td></tr>
+            <tr><td class="text-muted">Site</td><td>{{ selectedIncident.incident_site }}</td></tr>
+            <tr><td class="text-muted">Area</td><td>{{ selectedIncident.incident_area }}</td></tr>
+            <tr><td class="text-muted">Urgency</td><td class="text-capitalize">{{ selectedIncident.urgency }}</td></tr>
+          </table>
+        </div>
+        <div class="col-sm-6">
+          <h6 class="fw-bold text-primary">Involved Person</h6>
+          <table class="table table-sm table-borderless">
+            <tr><td class="text-muted">Name</td><td>{{ selectedIncident.involved_first }} {{ selectedIncident.involved_last }}</td></tr>
+            <tr><td class="text-muted">ID</td><td>{{ selectedIncident.employee_id || '—' }}</td></tr>
+            <tr><td class="text-muted">Title</td><td>{{ selectedIncident.job_title || '—' }}</td></tr>
+            <tr><td class="text-muted">Dept</td><td>{{ selectedIncident.department || '—' }}</td></tr>
+            <tr><td class="text-muted">Supervisor</td><td>{{ selectedIncident.supervisor_name || '—' }}</td></tr>
+          </table>
+        </div>
+        <div class="col-12">
+          <h6 class="fw-bold text-primary">Description</h6>
+          <p class="small bg-light rounded p-3">{{ selectedIncident.description || '—' }}</p>
+        </div>
+        <div class="col-sm-6">
+          <h6 class="fw-bold text-primary">Injury / OSHA</h6>
+          <table class="table table-sm table-borderless">
+            <tr><td class="text-muted">Injury Type</td><td>{{ selectedIncident.injury_type || '—' }}</td></tr>
+            <tr><td class="text-muted">Body Part</td><td>{{ selectedIncident.body_part || '—' }}</td></tr>
+            <tr><td class="text-muted">Days Away</td><td>{{ selectedIncident.days_away || 0 }}</td></tr>
+            <tr><td class="text-muted">Days Restricted</td><td>{{ selectedIncident.days_restricted || 0 }}</td></tr>
+            <tr><td class="text-muted">Treatment</td><td>{{ selectedIncident.medical_treatment || '—' }}</td></tr>
+            <tr><td class="text-muted">OSHA</td>
+              <td>
+                <span class="badge" [ngClass]="selectedIncident.osha_recordable ? 'bg-warning text-dark' : 'bg-success'">
+                  {{ selectedIncident.osha_recordable ? 'Recordable' : 'Not Recordable' }}
+                </span>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div class="col-sm-6">
+          <h6 class="fw-bold text-primary">Investigation</h6>
+          <table class="table table-sm table-borderless">
+            <tr><td class="text-muted">Root Cause</td><td class="text-capitalize">{{ selectedIncident.root_cause_category || '—' }}</td></tr>
+            <tr><td class="text-muted">RCA Method</td><td class="text-uppercase">{{ selectedIncident.rca_method || '—' }}</td></tr>
+            <tr><td class="text-muted">Training Gap</td><td>{{ selectedIncident.training_deficiency ? 'Yes' : 'No' }}</td></tr>
+          </table>
+          <h6 class="fw-bold text-primary mt-2">Corrective Actions</h6>
+          <div *ngIf="selectedIncident.corrective_actions?.length">
+            <div *ngFor="let a of selectedIncident.corrective_actions" class="small border-bottom py-1">
+              <span class="fw-semibold">{{ a.description }}</span>
+              <div class="text-muted">{{ a.assignee }} · Due {{ a.due_date }}</div>
+            </div>
+          </div>
+          <div *ngIf="!selectedIncident.corrective_actions?.length" class="text-muted small">None recorded</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

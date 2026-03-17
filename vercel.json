@@ -1,0 +1,9 @@
+{
+  "buildCommand": "npx ng build --configuration=production",
+  "outputDirectory": "dist/incident-ng/browser",
+  "installCommand": "npm install",
+  "framework": null,
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

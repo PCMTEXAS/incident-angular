@@ -1,0 +1,652 @@
+<!-- ══ NAV BAR ══════════════════════════════════════════════════════════ -->
+<nav class="navbar navbar-dark py-2" style="background-color:#0057A8">
+  <div class="container-fluid px-4">
+    <span class="navbar-brand d-flex align-items-center gap-2 fw-bold">
+      <i class="bi bi-clipboard-heart fs-5"></i>
+      EHS Incident Report
+    </span>
+    <div class="d-flex gap-2">
+      <a class="btn btn-sm btn-outline-light" routerLink="/dashboard">
+        <i class="bi bi-speedometer2 me-1"></i>Dashboard
+      </a>
+      <button class="btn btn-sm btn-outline-light" (click)="logout()">
+        <i class="bi bi-box-arrow-right me-1"></i>Logout
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- SUCCESS SCREEN -->
+<div *ngIf="submitSuccess" class="container py-5 text-center">
+  <div class="card shadow mx-auto p-5" style="max-width:560px">
+    <div class="mb-3 text-success display-4"><i class="bi bi-check-circle-fill"></i></div>
+    <h2 class="fw-bold text-dark mb-2">Incident Submitted</h2>
+    <p class="text-muted mb-1">Your incident has been recorded in the system.</p>
+    <div class="badge bg-primary fs-6 px-4 py-2 mb-4">{{ incidentIdGenerated }}</div>
+    <div class="d-grid gap-2">
+      <button class="btn btn-primary" (click)="newIncident()">
+        <i class="bi bi-plus-circle me-2"></i>Report Another Incident
+      </button>
+      <a class="btn btn-outline-secondary" routerLink="/dashboard">
+        <i class="bi bi-speedometer2 me-2"></i>Go to Dashboard
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- FORM -->
+<div *ngIf="!submitSuccess" class="container-xl py-4 px-3 px-md-4">
+
+  <!-- Step Progress Bar -->
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-body p-3">
+      <div class="d-flex justify-content-between mb-2">
+        <small class="text-muted fw-semibold">Step {{ currentStep }} of {{ totalSteps }}: {{ stepLabels[currentStep-1] }}</small>
+        <small class="text-muted">{{ stepProgress | number:'1.0-0' }}%</small>
+      </div>
+      <div class="progress mb-3" style="height:8px">
+        <div class="progress-bar" role="progressbar"
+             [style.width.%]="stepProgress"
+             style="background-color:#0057A8"></div>
+      </div>
+      <!-- Step pills -->
+      <div class="d-flex gap-1 flex-wrap">
+        <button *ngFor="let label of stepLabels; let i = index"
+                class="btn btn-sm step-pill"
+                [class.active]="currentStep === i+1"
+                [class.done]="currentStep > i+1"
+                (click)="goToStep(i+1)">
+          <span class="step-num me-1">{{ i+1 }}</span>{{ label }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- MAIN FORM CARD -->
+    <div class="col-xl-8">
+      <div class="card shadow-sm border-0">
+        <div class="card-header py-3" style="background:#0057A8">
+          <h5 class="text-white mb-0">
+            <i class="bi me-2"
+               [ngClass]="['bi-person','bi-geo-alt','bi-people','bi-bandaid','bi-search','bi-check-all'][currentStep-1]"></i>
+            {{ ['Reporter Information','Incident Details','Involved Person','Injury / Illness','Investigation','Review & Submit'][currentStep-1] }}
+          </h5>
+        </div>
+        <div class="card-body p-4">
+
+          <!-- ══ STEP 1: Reporter ══════════════════════════════════════ -->
+          <div *ngIf="currentStep === 1">
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">First Name <span class="text-danger">*</span></label>
+                <input class="form-control" [(ngModel)]="form.reporter_first" placeholder="First name" required>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">Last Name <span class="text-danger">*</span></label>
+                <input class="form-control" [(ngModel)]="form.reporter_last" placeholder="Last name" required>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">Email</label>
+                <input class="form-control" type="email" [(ngModel)]="form.reporter_email" placeholder="you@company.com">
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">Phone</label>
+                <input class="form-control" type="tel" [(ngModel)]="form.reporter_phone" placeholder="(713) 555-0100">
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">Department</label>
+                <select class="form-select" [(ngModel)]="form.reporter_dept">
+                  <option value="">Select department…</option>
+                  <option *ngFor="let d of DEPARTMENTS" [value]="d">{{ d }}</option>
+                </select>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">Site</label>
+                <select class="form-select" [(ngModel)]="form.reporter_site">
+                  <option value="">Select site…</option>
+                  <option *ngFor="let s of SITES" [value]="s">{{ s }}</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Job Title</label>
+                <input class="form-control" [(ngModel)]="form.reporter_title" placeholder="Your job title">
+              </div>
+            </div>
+          </div>
+
+          <!-- ══ STEP 2: Incident Details ══════════════════════════════ -->
+          <div *ngIf="currentStep === 2">
+            <!-- Type tiles -->
+            <label class="form-label fw-semibold mb-2">Incident Type <span class="text-danger">*</span></label>
+            <div class="row g-2 mb-4">
+              <div class="col-4 col-sm-3" *ngFor="let t of INCIDENT_TYPES">
+                <div class="type-tile text-center p-2 rounded cursor-pointer"
+                     [class.selected]="form.incident_type === t.value"
+                     (click)="form.incident_type = t.value">
+                  <i class="bi d-block fs-4 mb-1" [ngClass]="t.icon"></i>
+                  <small class="fw-semibold">{{ t.label }}</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">Urgency</label>
+                <select class="form-select" [(ngModel)]="form.urgency">
+                  <option value="immediate">🔴 Immediate</option>
+                  <option value="high">🟠 High</option>
+                  <option value="medium">🟡 Medium</option>
+                  <option value="low">🟢 Low</option>
+                </select>
+              </div>
+              <div class="col-sm-3">
+                <label class="form-label fw-semibold">Incident Date <span class="text-danger">*</span></label>
+                <input class="form-control" type="date" [(ngModel)]="form.incident_date">
+              </div>
+              <div class="col-sm-3">
+                <label class="form-label fw-semibold">Time</label>
+                <input class="form-control" type="time" [(ngModel)]="form.incident_time">
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">Incident Site</label>
+                <select class="form-select" [(ngModel)]="form.incident_site">
+                  <option value="">Select site…</option>
+                  <option *ngFor="let s of SITES" [value]="s">{{ s }}</option>
+                </select>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">Area / Location</label>
+                <input class="form-control" [(ngModel)]="form.incident_area" placeholder="e.g. Unit 3 / Loading Dock B">
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Description <span class="text-danger">*</span></label>
+                <textarea class="form-control" rows="4" [(ngModel)]="form.description"
+                          placeholder="Describe what happened, sequence of events, environmental conditions…"></textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Immediate Actions Taken</label>
+                <textarea class="form-control" rows="2" [(ngModel)]="form.immediate_actions"
+                          placeholder="First aid administered, area evacuated, supervisor notified…"></textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Equipment / Materials Involved</label>
+                <input class="form-control" [(ngModel)]="form.equipment_involved"
+                       placeholder="Forklift #FL-07, Chemical: Sodium Hydroxide…">
+              </div>
+            </div>
+          </div>
+
+          <!-- ══ STEP 3: Involved Person ════════════════════════════════ -->
+          <div *ngIf="currentStep === 3">
+            <!-- HRIS Lookup -->
+            <div class="card bg-light border-0 mb-4 p-3">
+              <label class="form-label fw-semibold mb-2">
+                <i class="bi bi-search me-1 text-primary"></i>HRIS Employee Lookup
+              </label>
+              <div class="input-group">
+                <input class="form-control" [(ngModel)]="empQuery"
+                       placeholder="Search by name or Employee ID…"
+                       (keyup.enter)="searchEmployee()">
+                <button class="btn btn-primary" (click)="searchEmployee()" [disabled]="empSearching">
+                  <span *ngIf="empSearching" class="spinner-border spinner-border-sm me-1"></span>
+                  <i *ngIf="!empSearching" class="bi bi-search"></i>
+                </button>
+              </div>
+              <!-- Results -->
+              <div *ngIf="empResults.length" class="list-group mt-2 shadow-sm">
+                <button *ngFor="let e of empResults"
+                        class="list-group-item list-group-item-action py-2"
+                        (click)="selectEmployee(e)">
+                  <div class="d-flex justify-content-between">
+                    <span class="fw-semibold">{{ e.first_name }} {{ e.last_name }}</span>
+                    <small class="text-muted">{{ e.employee_id }}</small>
+                  </div>
+                  <small class="text-muted">{{ e.job_title }} · {{ e.department }} · {{ e.site }}</small>
+                </button>
+              </div>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label fw-semibold">Person Type</label>
+                <div class="d-flex gap-2 flex-wrap">
+                  <div *ngFor="let t of ['employee','contractor','temp','visitor','other']"
+                       class="form-check form-check-inline border rounded px-3 py-2 cursor-pointer"
+                       [class.bg-primary]="form.person_type === t"
+                       [class.text-white]="form.person_type === t"
+                       (click)="form.person_type = t">
+                    <input class="form-check-input" type="radio" [(ngModel)]="form.person_type" [value]="t">
+                    <label class="form-check-label text-capitalize ms-1">{{ t }}</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">First Name</label>
+                <input class="form-control" [(ngModel)]="form.involved_first">
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">Last Name</label>
+                <input class="form-control" [(ngModel)]="form.involved_last">
+              </div>
+              <div class="col-sm-4">
+                <label class="form-label fw-semibold">Employee ID</label>
+                <input class="form-control" [(ngModel)]="form.employee_id">
+              </div>
+              <div class="col-sm-4">
+                <label class="form-label fw-semibold">Job Title</label>
+                <input class="form-control" [(ngModel)]="form.job_title">
+              </div>
+              <div class="col-sm-4">
+                <label class="form-label fw-semibold">Department</label>
+                <select class="form-select" [(ngModel)]="form.department">
+                  <option value="">Select…</option>
+                  <option *ngFor="let d of DEPARTMENTS" [value]="d">{{ d }}</option>
+                </select>
+              </div>
+              <div class="col-sm-4">
+                <label class="form-label fw-semibold">Hire Date</label>
+                <input class="form-control" type="date" [(ngModel)]="form.hire_date">
+              </div>
+              <div class="col-sm-4">
+                <label class="form-label fw-semibold">Supervisor</label>
+                <input class="form-control" [(ngModel)]="form.supervisor_name">
+              </div>
+              <div class="col-sm-4">
+                <label class="form-label fw-semibold">Supervisor Email</label>
+                <input class="form-control" type="email" [(ngModel)]="form.supervisor_email">
+              </div>
+            </div>
+
+            <!-- Witnesses -->
+            <div class="mt-4">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <label class="form-label fw-semibold mb-0">Witnesses</label>
+                <button class="btn btn-sm btn-outline-primary" (click)="addWitness()">
+                  <i class="bi bi-plus-circle me-1"></i>Add Witness
+                </button>
+              </div>
+              <div *ngFor="let w of witnesses; let i = index" class="card border-0 bg-light mb-2 p-3">
+                <div class="row g-2">
+                  <div class="col-sm-4">
+                    <input class="form-control form-control-sm" [(ngModel)]="w.name" placeholder="Full name">
+                  </div>
+                  <div class="col-sm-3">
+                    <input class="form-control form-control-sm" [(ngModel)]="w.phone" placeholder="Phone">
+                  </div>
+                  <div class="col-sm-4">
+                    <input class="form-control form-control-sm" [(ngModel)]="w.statement" placeholder="Brief statement">
+                  </div>
+                  <div class="col-sm-1 d-flex align-items-center">
+                    <button class="btn btn-sm btn-link text-danger p-0" (click)="removeWitness(i)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="!witnesses.length" class="text-muted small text-center py-2">No witnesses added</div>
+            </div>
+          </div>
+
+          <!-- ══ STEP 4: Injury / Illness ══════════════════════════════ -->
+          <div *ngIf="currentStep === 4">
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">Injury / Illness Type</label>
+                <select class="form-select" [(ngModel)]="form.injury_type">
+                  <option value="">Select type…</option>
+                  <option>Struck By Object</option>
+                  <option>Struck Against Object</option>
+                  <option>Caught In / Between</option>
+                  <option>Fall — Same Level</option>
+                  <option>Fall — Different Level</option>
+                  <option>Overexertion / Ergonomic</option>
+                  <option>Chemical Exposure</option>
+                  <option>Thermal (Heat/Cold)</option>
+                  <option>Electrical</option>
+                  <option>Respiratory</option>
+                  <option>Repetitive Motion</option>
+                  <option>Vehicle / MVA</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div class="col-sm-3">
+                <label class="form-label fw-semibold">Body Area</label>
+                <select class="form-select" [(ngModel)]="form.body_area">
+                  <option value="">Select…</option>
+                  <option>Head / Neck</option>
+                  <option>Torso / Back</option>
+                  <option>Upper Extremity</option>
+                  <option>Lower Extremity</option>
+                  <option>Multiple</option>
+                </select>
+              </div>
+              <div class="col-sm-3">
+                <label class="form-label fw-semibold">Specific Body Part</label>
+                <input class="form-control" [(ngModel)]="form.body_part" placeholder="e.g. Right knee">
+              </div>
+              <div class="col-sm-4">
+                <label class="form-label fw-semibold">Days Away From Work</label>
+                <input class="form-control" type="number" min="0" [(ngModel)]="form.days_away" (change)="computeOsha()">
+              </div>
+              <div class="col-sm-4">
+                <label class="form-label fw-semibold">Days Restricted / Transfer</label>
+                <input class="form-control" type="number" min="0" [(ngModel)]="form.days_restricted" (change)="computeOsha()">
+              </div>
+              <div class="col-sm-4">
+                <label class="form-label fw-semibold">Work Related?</label>
+                <select class="form-select" [(ngModel)]="form.work_related" (change)="computeOsha()">
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                  <option value="investigating">Under Investigation</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Medical Treatment</label>
+                <select class="form-select" [(ngModel)]="form.medical_treatment" (change)="computeOsha()">
+                  <option value="">Select…</option>
+                  <option>First aid only</option>
+                  <option>Prescription medication</option>
+                  <option>Physician / clinic visit</option>
+                  <option>Emergency room visit</option>
+                  <option>Hospitalization (overnight)</option>
+                  <option>Surgery</option>
+                  <option>Loss of consciousness</option>
+                  <option>Occupational therapy / PT</option>
+                </select>
+              </div>
+
+              <!-- OSHA Result -->
+              <div class="col-12">
+                <div class="alert d-flex align-items-start gap-2 py-2"
+                     [ngClass]="form.osha_recordable ? 'alert-warning' : 'alert-success'">
+                  <i class="bi fs-5" [ngClass]="form.osha_recordable ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'"></i>
+                  <div>
+                    <strong>OSHA Recordability: {{ form.osha_recordable ? 'RECORDABLE' : 'Not Recordable' }}</strong>
+                    <div class="small">{{ form.osha_result || 'Complete fields above to determine recordability' }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- File Uploads -->
+            <div class="mt-4">
+              <label class="form-label fw-semibold">
+                <i class="bi bi-paperclip me-1 text-primary"></i>Attachments
+              </label>
+              <div class="upload-zone text-center p-4 rounded border-2 border-dashed mb-2">
+                <input type="file" multiple class="d-none" id="fileInput" (change)="onFilesSelected($event)"
+                       accept="image/*,.pdf,.doc,.docx,.xls,.xlsx">
+                <label for="fileInput" class="cursor-pointer">
+                  <i class="bi bi-cloud-upload fs-3 text-muted d-block mb-1"></i>
+                  <span class="text-muted">Click to upload photos, documents, or reports</span>
+                </label>
+              </div>
+              <div *ngFor="let f of attachmentFiles; let i = index"
+                   class="d-flex align-items-center gap-2 py-1 border-bottom small">
+                <i class="bi bi-file-earmark text-primary"></i>
+                <span class="flex-grow-1">{{ f.name }}</span>
+                <span class="text-muted">{{ formatFileSize(f.size) }}</span>
+                <button class="btn btn-sm btn-link text-danger p-0" (click)="removeFile(i)">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ══ STEP 5: Investigation ══════════════════════════════════ -->
+          <div *ngIf="currentStep === 5">
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">Root Cause Category</label>
+                <select class="form-select" [(ngModel)]="form.root_cause_category">
+                  <option value="">Select root cause…</option>
+                  <option value="human-error">Human Error</option>
+                  <option value="equipment">Equipment Failure</option>
+                  <option value="environment">Environmental Conditions</option>
+                  <option value="procedure">Procedure / SOP Gap</option>
+                  <option value="training">Training Deficiency</option>
+                  <option value="management">Management System</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">RCA Method</label>
+                <select class="form-select" [(ngModel)]="form.rca_method">
+                  <option value="whys">5 Whys</option>
+                  <option value="fishbone">Fishbone / Ishikawa</option>
+                  <option value="bowtie">Bow-Tie Analysis</option>
+                  <option value="fmea">FMEA</option>
+                  <option value="tca">TapRooT</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="training_check"
+                         [(ngModel)]="form.training_deficiency">
+                  <label class="form-check-label fw-semibold" for="training_check">
+                    Training deficiency was a contributing factor
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5 Whys -->
+            <div *ngIf="form.rca_method === 'whys'" class="mt-4">
+              <label class="form-label fw-semibold d-block mb-3">
+                <i class="bi bi-diagram-3 me-1 text-primary"></i>5 Whys Analysis
+              </label>
+              <div *ngFor="let w of fiveWhys; let i = index" class="mb-3">
+                <div class="d-flex align-items-start gap-2">
+                  <div class="why-num rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0"
+                       style="width:28px;height:28px;font-size:0.75rem;margin-top:2px">{{ i+1 }}</div>
+                  <div class="flex-grow-1">
+                    <label class="form-label fw-semibold small mb-1">{{ w.why }}</label>
+                    <textarea class="form-control form-control-sm" rows="2"
+                              [(ngModel)]="w.answer"
+                              [placeholder]="'Why ' + (i+1) + ' — What caused the previous why?'"></textarea>
+                  </div>
+                </div>
+                <div *ngIf="i < 4 && w.answer.trim()" class="ms-5 mt-1 mb-1 text-muted small">
+                  <i class="bi bi-arrow-down"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Corrective Actions -->
+            <div class="mt-4">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <label class="form-label fw-semibold mb-0">
+                  <i class="bi bi-check-square me-1 text-primary"></i>Corrective Actions
+                </label>
+                <button class="btn btn-sm btn-outline-primary" (click)="addAction()">
+                  <i class="bi bi-plus-circle me-1"></i>Add Action
+                </button>
+              </div>
+              <div *ngFor="let a of correctiveActions; let i = index" class="card border-0 bg-light mb-2 p-3">
+                <div class="row g-2">
+                  <div class="col-12 col-md-5">
+                    <input class="form-control form-control-sm" [(ngModel)]="a.description"
+                           placeholder="Corrective action description…">
+                  </div>
+                  <div class="col-6 col-md-2">
+                    <input class="form-control form-control-sm" [(ngModel)]="a.assignee" placeholder="Assignee">
+                  </div>
+                  <div class="col-6 col-md-2">
+                    <input class="form-control form-control-sm" type="date" [(ngModel)]="a.due_date">
+                  </div>
+                  <div class="col-6 col-md-2">
+                    <select class="form-select form-select-sm" [(ngModel)]="a.priority">
+                      <option value="critical">Critical</option>
+                      <option value="high">High</option>
+                      <option value="medium">Medium</option>
+                      <option value="low">Low</option>
+                    </select>
+                  </div>
+                  <div class="col-6 col-md-1 d-flex align-items-center">
+                    <button class="btn btn-sm btn-link text-danger p-0" (click)="removeAction(i)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="!correctiveActions.length" class="text-muted small text-center py-2">No corrective actions added</div>
+            </div>
+          </div>
+
+          <!-- ══ STEP 6: Review & Submit ════════════════════════════════ -->
+          <div *ngIf="currentStep === 6">
+            <div class="row g-3 mb-4">
+              <!-- Summary cards -->
+              <div class="col-sm-6">
+                <div class="card border-0 bg-light h-100 p-3">
+                  <h6 class="fw-bold text-primary mb-3"><i class="bi bi-person me-1"></i>Reporter</h6>
+                  <dl class="row small mb-0">
+                    <dt class="col-5 text-muted">Name</dt>
+                    <dd class="col-7">{{ form.reporter_first }} {{ form.reporter_last }}</dd>
+                    <dt class="col-5 text-muted">Email</dt>
+                    <dd class="col-7">{{ form.reporter_email || '—' }}</dd>
+                    <dt class="col-5 text-muted">Site</dt>
+                    <dd class="col-7">{{ form.reporter_site || '—' }}</dd>
+                  </dl>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="card border-0 bg-light h-100 p-3">
+                  <h6 class="fw-bold text-primary mb-3"><i class="bi bi-geo-alt me-1"></i>Incident</h6>
+                  <dl class="row small mb-0">
+                    <dt class="col-5 text-muted">Type</dt>
+                    <dd class="col-7 text-capitalize">{{ form.incident_type || '—' }}</dd>
+                    <dt class="col-5 text-muted">Date</dt>
+                    <dd class="col-7">{{ form.incident_date || '—' }}</dd>
+                    <dt class="col-5 text-muted">Site</dt>
+                    <dd class="col-7">{{ form.incident_site || '—' }}</dd>
+                    <dt class="col-5 text-muted">Urgency</dt>
+                    <dd class="col-7 text-capitalize">{{ form.urgency }}</dd>
+                  </dl>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="card border-0 bg-light h-100 p-3">
+                  <h6 class="fw-bold text-primary mb-3"><i class="bi bi-people me-1"></i>Involved Person</h6>
+                  <dl class="row small mb-0">
+                    <dt class="col-5 text-muted">Name</dt>
+                    <dd class="col-7">{{ form.involved_first }} {{ form.involved_last }}</dd>
+                    <dt class="col-5 text-muted">ID</dt>
+                    <dd class="col-7">{{ form.employee_id || '—' }}</dd>
+                    <dt class="col-5 text-muted">Title</dt>
+                    <dd class="col-7">{{ form.job_title || '—' }}</dd>
+                  </dl>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="card border-0 bg-light h-100 p-3">
+                  <h6 class="fw-bold text-primary mb-3"><i class="bi bi-bandaid me-1"></i>Injury / OSHA</h6>
+                  <dl class="row small mb-0">
+                    <dt class="col-5 text-muted">Type</dt>
+                    <dd class="col-7">{{ form.injury_type || '—' }}</dd>
+                    <dt class="col-5 text-muted">Days Away</dt>
+                    <dd class="col-7">{{ form.days_away }}</dd>
+                    <dt class="col-5 text-muted">OSHA</dt>
+                    <dd class="col-7">
+                      <span class="badge" [ngClass]="form.osha_recordable ? 'bg-warning text-dark' : 'bg-success'">
+                        {{ form.osha_recordable ? 'Recordable' : 'Not Recordable' }}
+                      </span>
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+
+            <!-- AI Analysis panel -->
+            <div class="card border-primary border-2 mb-4">
+              <div class="card-header d-flex align-items-center gap-2" style="background:#0057A8">
+                <i class="bi bi-robot text-white fs-5"></i>
+                <span class="text-white fw-bold">AI Safety Analyst</span>
+                <button class="btn btn-sm btn-outline-light ms-auto" (click)="runAiAnalysis()">
+                  <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                </button>
+              </div>
+              <div class="card-body">
+                <div *ngIf="aiLoading" class="text-center py-3">
+                  <div class="spinner-border text-primary" role="status"></div>
+                  <p class="text-muted mt-2 mb-0">Analyzing incident data…</p>
+                </div>
+                <div *ngIf="!aiLoading && aiAnalysis" class="ai-output" [innerHTML]="aiAnalysis | aiMarkdown"></div>
+                <div *ngIf="!aiLoading && !aiAnalysis" class="text-muted text-center py-2">No analysis yet</div>
+              </div>
+            </div>
+
+            <!-- Error -->
+            <div *ngIf="submitError" class="alert alert-danger">
+              <i class="bi bi-exclamation-circle me-2"></i>{{ submitError }}
+            </div>
+
+            <div class="d-grid">
+              <button class="btn btn-lg fw-bold py-3" style="background:#0057A8; color:white"
+                      (click)="submitForm()" [disabled]="submitting">
+                <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
+                <i *ngIf="!submitting" class="bi bi-send-check me-2"></i>
+                {{ submitting ? 'Submitting…' : 'Submit Incident Report' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- ── Navigation buttons ─────────────────────────────── -->
+          <div class="d-flex justify-content-between mt-4" *ngIf="currentStep < 6 || !submitSuccess">
+            <button class="btn btn-outline-secondary" *ngIf="currentStep > 1" (click)="prevStep()">
+              <i class="bi bi-arrow-left me-1"></i>Previous
+            </button>
+            <div *ngIf="currentStep === 1"></div>
+            <button class="btn btn-primary" *ngIf="currentStep < 6" (click)="nextStep()">
+              Next <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR: Incident checklist -->
+    <div class="col-xl-4 d-none d-xl-block">
+      <div class="card shadow-sm border-0 sticky-top" style="top:1rem">
+        <div class="card-header" style="background:#0057A8">
+          <h6 class="text-white mb-0"><i class="bi bi-list-check me-2"></i>Quick Status</h6>
+        </div>
+        <div class="card-body p-3">
+          <ul class="list-unstyled mb-0">
+            <li class="d-flex align-items-center gap-2 py-1 border-bottom">
+              <i class="bi fs-5" [ngClass]="form.reporter_first ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted'"></i>
+              <span class="small">Reporter info</span>
+            </li>
+            <li class="d-flex align-items-center gap-2 py-1 border-bottom">
+              <i class="bi fs-5" [ngClass]="form.incident_type && form.description ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted'"></i>
+              <span class="small">Incident details</span>
+            </li>
+            <li class="d-flex align-items-center gap-2 py-1 border-bottom">
+              <i class="bi fs-5" [ngClass]="form.involved_first ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted'"></i>
+              <span class="small">Involved person</span>
+            </li>
+            <li class="d-flex align-items-center gap-2 py-1 border-bottom">
+              <i class="bi fs-5" [ngClass]="form.medical_treatment ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted'"></i>
+              <span class="small">Injury / OSHA assessment</span>
+            </li>
+            <li class="d-flex align-items-center gap-2 py-1 border-bottom">
+              <i class="bi fs-5" [ngClass]="form.root_cause_category ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted'"></i>
+              <span class="small">Root cause / investigation</span>
+            </li>
+            <li class="d-flex align-items-center gap-2 py-1">
+              <i class="bi bi-circle text-muted fs-5"></i>
+              <span class="small">Review &amp; submit</span>
+            </li>
+          </ul>
+
+          <div *ngIf="form.osha_recordable" class="alert alert-warning py-2 mt-3 mb-0 small">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            <strong>OSHA Recordable</strong> — 7-day filing required
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,43 @@
+$dc-blue: #0057A8;
+
+.type-tile {
+  border: 2px solid #dee2e6;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: #fff;
+  &:hover { border-color: $dc-blue; background: #f0f7ff; }
+  &.selected { border-color: $dc-blue; background: $dc-blue; color: white; }
+}
+
+.cursor-pointer { cursor: pointer; }
+
+.step-pill {
+  font-size: 0.75rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 2rem;
+  border: 1px solid #dee2e6;
+  background: white;
+  color: #6c757d;
+  &.active { background: $dc-blue; color: white; border-color: $dc-blue; }
+  &.done { background: #198754; color: white; border-color: #198754; }
+}
+
+.upload-zone {
+  border: 2px dashed #ced4da !important;
+  background: #f8f9fa;
+  transition: all 0.2s;
+  &:hover { border-color: $dc-blue !important; background: #f0f7ff; }
+}
+
+.ai-output {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  ::ng-deep {
+    h2 { font-size: 1rem; font-weight: 700; color: $dc-blue; margin-bottom: 0.75rem; }
+    h3 { font-size: 0.9rem; font-weight: 700; margin-top: 1rem; margin-bottom: 0.5rem; }
+    strong { color: #212529; }
+    p { margin-bottom: 0.5rem; }
+    ul, ol { padding-left: 1.25rem; }
+    li { margin-bottom: 0.25rem; }
+  }
+}
