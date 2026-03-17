@@ -243,8 +243,22 @@ export class IncidentFormComponent implements OnInit {
 
     const {error} = await this.supabase.createIncident(payload);
     this.submitting = false;
-    if (error) this.submitError = `Submission failed: ${error.message}`;
-    else this.submitSuccess = true;
+    if (error) { this.submitError = `Submission failed: ${error.message}`; return; }
+
+    this.submitSuccess = true;
+
+    // Fire-and-forget email notifications
+    try {
+      await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ incident: payload })
+      });
+    } catch (_) { /* notifications are best-effort */ }
+  }
+
+  printReport() {
+    window.print();
   }
 
   newIncident() {

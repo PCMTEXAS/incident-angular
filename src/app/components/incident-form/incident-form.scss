@@ -41,3 +41,25 @@ $dc-blue: #0057A8;
     li { margin-bottom: 0.25rem; }
   }
 }
+
+// ── Print / PDF styles ─────────────────────────────────────────
+@media print {
+  body { background: #fff !important; }
+
+  // Hide everything except the success card
+  app-root > * { display: none !important; }
+  app-incident-form { display: block !important; }
+
+  // Hide nav, buttons, form steps — show only success card
+  .stepper, .step-nav, .btn, nav, header, footer,
+  [routerLink], button { display: none !important; }
+
+  .card.shadow {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+    max-width: 100% !important;
+  }
+
+  // Show report content cleanly
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

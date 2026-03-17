@@ -44,3 +44,12 @@ body {
 .table > :not(caption) > * > * { vertical-align: middle; }
 .border-2 { border-width: 2px !important; }
 .border-dashed { border-style: dashed !important; }
+
+@media print {
+  body { background: #fff !important; margin: 0; }
+  app-root > app-incident-form .container.py-5 { display: block !important; }
+  // Hide everything that isn't the success confirmation card
+  nav, header, .stepper, .step-content > *:not(.submit-success),
+  .btn, button, a.btn { display: none !important; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
