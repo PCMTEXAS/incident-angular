@@ -1,0 +1,139 @@
+<div class="admin-shell">
+
+  <!-- Header -->
+  <header class="admin-header">
+    <div class="admin-header__brand">
+      <span class="shield">🛡</span>
+      <div>
+        <div class="brand-title">DigitalChalk EHS</div>
+        <div class="brand-sub">Management Console</div>
+      </div>
+    </div>
+    <nav class="admin-header__nav">
+      <a routerLink="/dashboard" class="nav-link">Dashboard</a>
+      <button class="btn btn--ghost" (click)="logout()">Sign Out</button>
+    </nav>
+  </header>
+
+  <main class="admin-main">
+
+    <!-- Page title -->
+    <div class="page-header">
+      <div>
+        <h1>User Management</h1>
+        <p>Add portal users and send invite links.</p>
+      </div>
+      <button class="btn btn--primary" (click)="openAddForm()">+ Add User</button>
+    </div>
+
+    <!-- Alerts -->
+    <div class="alert alert--error" *ngIf="error">{{ error }}</div>
+    <div class="alert alert--success" *ngIf="successMsg">{{ successMsg }}</div>
+
+    <!-- Generated invite link -->
+    <div class="invite-box" *ngIf="generatedLink">
+      <div class="invite-box__label">🔗 Invite Link (expires in 7 days)</div>
+      <div class="invite-box__row">
+        <code class="invite-box__url">{{ generatedLink }}</code>
+        <button class="btn btn--copy" (click)="copyLink()">
+          {{ copiedToken ? '✓ Copied!' : 'Copy Link' }}
+        </button>
+      </div>
+      <div class="invite-box__hint">Share this link with the user. Their User ID and temp password will be pre-filled on login.</div>
+    </div>
+
+    <!-- Add User Form -->
+    <div class="card form-card" *ngIf="showAddForm">
+      <h2 class="card__title">New User</h2>
+      <div class="form-grid">
+
+        <div class="field">
+          <label>Full Name *</label>
+          <input type="text" [(ngModel)]="newUser.name" (ngModelChange)="onNameChange()"
+            placeholder="e.g. Jane Smith" class="input" />
+        </div>
+
+        <div class="field">
+          <label>Email</label>
+          <input type="email" [(ngModel)]="newUser.email" placeholder="jane@company.com" class="input" />
+        </div>
+
+        <div class="field">
+          <label>User ID * <span class="hint">(login username)</span></label>
+          <input type="text" [(ngModel)]="newUser.user_id" placeholder="JANE.SMITH"
+            class="input input--mono" style="text-transform:uppercase" />
+        </div>
+
+        <div class="field">
+          <label>Role *</label>
+          <select [(ngModel)]="newUser.role" class="input">
+            <option value="reporter">Reporter</option>
+            <option value="manager">Manager</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+
+        <div class="field field--full">
+          <label>Temporary Password *</label>
+          <input type="text" [(ngModel)]="newUser.temp_password" class="input input--mono" />
+          <span class="hint">User will log in with this password. You can send it alongside the invite link.</span>
+        </div>
+
+      </div>
+      <div class="form-actions">
+        <button class="btn btn--ghost" (click)="showAddForm = false">Cancel</button>
+        <button class="btn btn--primary" (click)="addUser()" [disabled]="saving">
+          {{ saving ? 'Creating…' : 'Create User & Generate Link' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="card">
+      <div *ngIf="loading" class="loading-state">Loading users…</div>
+
+      <div *ngIf="!loading && users.length === 0" class="empty-state">
+        No users yet. Click <strong>+ Add User</strong> to create the first one.
+      </div>
+
+      <table class="users-table" *ngIf="!loading && users.length > 0">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>User ID</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Last Login</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of users" [class.inactive-row]="!user.is_active">
+            <td>{{ user.name }}</td>
+            <td><code class="mono">{{ user.user_id }}</code></td>
+            <td>{{ user.email || '—' }}</td>
+            <td><span class="badge badge--{{ user.role }}">{{ user.role }}</span></td>
+            <td>
+              <span class="badge" [class.badge--active]="user.is_active" [class.badge--inactive]="!user.is_active">
+                {{ user.is_active ? 'Active' : 'Inactive' }}
+              </span>
+              <span class="badge badge--temp" *ngIf="user.is_temp_password && user.is_active">Temp PW</span>
+            </td>
+            <td>{{ user.last_login ? (user.last_login | date:'MM/dd/yy h:mm a') : 'Never' }}</td>
+            <td class="actions">
+              <button class="btn btn--sm btn--outline" (click)="resetPassword(user)" title="Reset password & generate new invite link">
+                Reset PW
+              </button>
+              <button class="btn btn--sm" [class.btn--danger]="user.is_active" [class.btn--outline]="!user.is_active"
+                (click)="toggleActive(user)">
+                {{ user.is_active ? 'Disable' : 'Enable' }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+</div>

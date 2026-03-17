@@ -69,6 +69,21 @@ export interface Employee {
   phone?: string;
 }
 
+export interface AppUserRecord {
+  id: string;
+  user_id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'manager' | 'reporter';
+  password_hash: string;
+  is_temp_password: boolean;
+  invite_token: string | null;
+  invite_expires_at: string | null;
+  is_active: boolean;
+  created_at: string;
+  last_login: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SupabaseService {
   private supabase: SupabaseClient;
@@ -101,38 +116,28 @@ export class SupabaseService {
 
   async getIncidentById(id: string): Promise<{ data: Incident | null; error: any }> {
     const { data, error } = await this.supabase
-      .from('incidents')
-      .select('*')
-      .eq('id', id)
-      .single();
+      .from('incidents').select('*').eq('id', id).single();
     return { data, error };
   }
 
   async createIncident(incident: Incident): Promise<{ data: Incident | null; error: any }> {
     const { data, error } = await this.supabase
-      .from('incidents')
-      .insert([incident])
-      .select()
-      .single();
+      .from('incidents').insert([incident]).select().single();
     return { data, error };
   }
 
   async updateIncidentStatus(id: string, status: string): Promise<{ error: any }> {
     const { error } = await this.supabase
-      .from('incidents')
-      .update({ status })
-      .eq('id', id);
+      .from('incidents').update({ status }).eq('id', id);
     return { error };
   }
 
   // ── EMPLOYEES ─────────────────────────────────────────────────
   async searchEmployees(query: string): Promise<{ data: Employee[] | null; error: any }> {
     const { data, error } = await this.supabase
-      .from('employees')
-      .select('*')
+      .from('employees').select('*')
       .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,employee_id.ilike.%${query}%`)
-      .eq('status', 'Active')
-      .limit(10);
+      .eq('status', 'Active').limit(10);
     return { data, error };
   }
 
@@ -141,33 +146,90 @@ export class SupabaseService {
     const ext = file.name.split('.').pop();
     const path = `${incidentId}/${Date.now()}.${ext}`;
     const { error } = await this.supabase.storage
-      .from('incident-attachments')
-      .upload(path, file);
+      .from('incident-attachments').upload(path, file);
     if (error) return { url: null, error };
     const { data } = this.supabase.storage
-      .from('incident-attachments')
-      .getPublicUrl(path);
+      .from('incident-attachments').getPublicUrl(path);
     return { url: data.publicUrl, error: null };
   }
 
   // ── STATS ──────────────────────────────────────────────────────
-  async getStats(): Promise<{
-    total: number;
-    open: number;
-    recordable: number;
-    thisMonth: number;
-  }> {
+  async getStats(): Promise<{ total: number; open: number; recordable: number; thisMonth: number }> {
     const { data } = await this.supabase.from('incidents').select('status, osha_recordable, incident_date');
     if (!data) return { total: 0, open: 0, recordable: 0, thisMonth: 0 };
-
     const now = new Date();
     const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
     return {
       total: data.length,
       open: data.filter(r => r.status === 'Open' || r.status === 'In Progress').length,
       recordable: data.filter(r => r.osha_recordable).length,
       thisMonth: data.filter(r => r.incident_date?.startsWith(monthStr)).length
     };
+  }
+
+  // ── APP USERS ──────────────────────────────────────────────────
+  async getAppUsers(): Promise<{ data: AppUserRecord[] | null; error: any }> {
+    return this.supabase
+      .from('app_users').select('*').order('created_at', { ascending: false });
+  }
+
+  async getUserByCredentials(userId: string, passwordHash: string): Promise<{ data: AppUserRecord | null; error: any }> {
+    const { data, error } = await this.supabase
+      .from('app_users').select('*')
+      .eq('user_id', userId)
+      .eq('password_hash', passwordHash)
+      .eq('is_active', true)
+      .single();
+    return { data: data ?? null, error };
+  }
+
+  async getUserByInviteToken(token: string): Promise<{ user_id: string; temp_password: string } | null> {
+    const { data } = await this.supabase
+      .from('app_users').select('user_id, invite_token, invite_expires_at, is_active')
+      .eq('invite_token', token)
+      .eq('is_active', true)
+      .single();
+    if (!data) return null;
+    if (data.invite_expires_at && new Date(data.invite_expires_at) < new Date()) return null;
+    // temp_password is stored separately; return the token so login can pre-fill
+    return { user_id: data.user_id, temp_password: token };
+  }
+
+  async createAppUser(user: {
+    user_id: string;
+    name: string;
+    email: string;
+    role: 'admin' | 'manager' | 'reporter';
+    password_hash: string;
+    invite_token: string;
+    invite_expires_at: string;
+  }): Promise<{ data: AppUserRecord | null; error: any }> {
+    const { data, error } = await this.supabase
+      .from('app_users')
+      .insert([{ ...user, is_temp_password: true, is_active: true }])
+      .select().single();
+    return { data: data ?? null, error };
+  }
+
+  async updateLastLogin(userId: string): Promise<void> {
+    await this.supabase
+      .from('app_users').update({ last_login: new Date().toISOString() }).eq('id', userId);
+  }
+
+  async toggleUserActive(userId: string, isActive: boolean): Promise<{ error: any }> {
+    const { error } = await this.supabase
+      .from('app_users').update({ is_active: isActive }).eq('id', userId);
+    return { error };
+  }
+
+  async resetUserPassword(userId: string, passwordHash: string, inviteToken: string, expiresAt: string): Promise<{ error: any }> {
+    const { error } = await this.supabase
+      .from('app_users').update({
+        password_hash: passwordHash,
+        is_temp_password: true,
+        invite_token: inviteToken,
+        invite_expires_at: expiresAt
+      }).eq('id', userId);
+    return { error };
   }
 }
