@@ -10,6 +10,7 @@
       </div>
     </div>
     <nav class="admin-header__nav">
+      <a routerLink="/form" class="nav-link">Submit Incident</a>
       <a routerLink="/dashboard" class="nav-link">Dashboard</a>
       <button class="btn btn--ghost" (click)="logout()">Sign Out</button>
     </nav>
@@ -37,6 +38,9 @@
         <code class="invite-box__url">{{ generatedLink }}</code>
         <button class="btn btn--copy" (click)="copyLink()">
           {{ copiedToken ? '✓ Copied!' : 'Copy Link' }}
+        </button>
+        <button class="btn btn--copy" (click)="sendInviteEmail()" *ngIf="lastCreatedEmail" style="margin-left:8px;">
+          ✉ Send Email
         </button>
       </div>
       <div class="invite-box__hint">Share this link with the user. Their User ID and temp password will be pre-filled on login.</div>

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -23,11 +23,13 @@ export class AdminComponent implements OnInit {
 
   newUser = { name: '', email: '', role: 'reporter' as 'admin' | 'manager' | 'reporter', user_id: '', temp_password: '' };
   generatedLink: string | null = null;
+  lastCreatedEmail: string | null = null;
 
   constructor(
     private supabase: SupabaseService,
     private auth: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -41,6 +43,7 @@ export class AdminComponent implements OnInit {
     if (error) this.error = 'Failed to load users.';
     else this.users = data ?? [];
     this.loading = false;
+    this.cdr.detectChanges();
   }
 
   generateUserId(name: string): string {
@@ -90,6 +93,7 @@ export class AdminComponent implements OnInit {
     }
 
     this.generatedLink = `${window.location.origin}/login?invite=${inviteToken}`;
+    this.lastCreatedEmail = this.newUser.email || null;
     this.successMsg = `User "${data!.name}" created!`;
     this.showAddForm = false;
     this.newUser = { name: '', email: '', role: 'reporter', user_id: '', temp_password: '' };
@@ -103,17 +107,27 @@ export class AdminComponent implements OnInit {
     const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
     const { error } = await this.supabase.resetUserPassword(user.id, hash, inviteToken, expires);
-    if (error) { this.error = 'Failed to reset password.'; return; }
+    if (error) { this.error = 'Failed to reset password.'; this.cdr.detectChanges(); return; }
 
     this.generatedLink = `${window.location.origin}/login?invite=${inviteToken}`;
+    this.lastCreatedEmail = user.email || null;
     this.successMsg = `Password reset for "${user.name}". Share the link below.`;
     await this.loadUsers();
   }
 
   async toggleActive(user: AppUserRecord) {
     const { error } = await this.supabase.toggleUserActive(user.id, !user.is_active);
-    if (error) { this.error = 'Failed to update user.'; return; }
+    if (error) { this.error = 'Failed to update user.'; this.cdr.detectChanges(); return; }
     await this.loadUsers();
+  }
+
+  sendInviteEmail() {
+    if (!this.generatedLink || !this.lastCreatedEmail) return;
+    const subject = encodeURIComponent('You have been invited to the EHS Incident Portal');
+    const body = encodeURIComponent(
+      `You have been invited to access the EHS Incident Portal.\n\nClick the link below to get started:\n${this.generatedLink}\n\nThis link expires in 7 days.\n\nIf you have any questions, contact your administrator.`
+    );
+    window.open(`mailto:${this.lastCreatedEmail}?subject=${subject}&body=${body}`);
   }
 
   copyLink() {

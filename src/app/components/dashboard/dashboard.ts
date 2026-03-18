@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -40,7 +40,7 @@ export class DashboardComponent implements OnInit {
   readonly INCIDENT_TYPES = ['', 'injury', 'illness', 'nearmiss', 'vehicle', 'environmental', 'property', 'contractor', 'security', 'observation'];
   readonly SITES = ['', 'Deer Park', 'Baytown', 'Texas City', 'La Porte', 'Pasadena', 'Freeport', 'Port Arthur', 'Corporate HQ'];
 
-  constructor(private supabase: SupabaseService, private auth: AuthService, private router: Router) {}
+  constructor(private supabase: SupabaseService, private auth: AuthService, private router: Router, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
     if (!this.auth.isAuthenticated()) { this.router.navigate(['/login']); return; }
@@ -54,10 +54,11 @@ export class DashboardComponent implements OnInit {
       this.supabase.getStats()
     ]);
     this.loading = false;
-    if (error) { this.error = error.message; return; }
+    if (error) { this.error = error.message; this.cdr.detectChanges(); return; }
     this.incidents = data || [];
     this.stats = stats;
     this.applyFilters();
+    this.cdr.detectChanges();
   }
 
   applyFilters() {
@@ -121,6 +122,7 @@ export class DashboardComponent implements OnInit {
     this.updatingId = '';
     this.applyFilters();
     this.stats.open = this.incidents.filter(r => r.status === 'Open' || r.status === 'In Progress').length;
+    this.cdr.detectChanges();
   }
 
   statusBadge(status?: string): string {

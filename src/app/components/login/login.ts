@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -23,7 +23,8 @@ export class LoginComponent implements OnInit {
   constructor(
     private auth: AuthService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
@@ -40,6 +41,7 @@ export class LoginComponent implements OnInit {
       } else {
         this.errorMessage = 'This invite link has expired or is invalid. Please contact your administrator.';
       }
+      this.cdr.detectChanges();
     }
   }
 
@@ -52,6 +54,7 @@ export class LoginComponent implements OnInit {
       this.router.navigate([result.user?.role === 'admin' ? '/admin' : '/dashboard']);
     } else {
       this.errorMessage = result.message;
+      this.cdr.detectChanges();
     }
   }
 }
