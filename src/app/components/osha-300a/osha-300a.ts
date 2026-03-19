@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { SupabaseService, Incident } from '../../services/supabase.service';
 import { AuthService } from '../../services/auth.service';
+import { PdfService } from '../../services/pdf.service';
 
 interface Osha300ASummary {
   totalDeaths: number;
@@ -32,11 +33,17 @@ export class Osha300aComponent implements OnInit {
   private supabase = inject(SupabaseService);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private pdfSvc = inject(PdfService);
 
   selectedYear = signal(new Date().getFullYear());
   loading = signal(false);
   error = signal('');
   incidents = signal<Incident[]>([]);
+
+  pdfSaving = signal(false);
+  pdfStage = signal<'generating' | 'uploading' | 'done' | ''>('');
+  pdfUrl = signal<string>('');
+  pdfFilename = signal<string>('');
 
   availableYears = Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i);
 
@@ -89,12 +96,15 @@ export class Osha300aComponent implements OnInit {
       (i.injury_type ?? '').toLowerCase().includes('toxic');
     const isHearingLoss = (i: Incident) =>
       (i.injury_type ?? '').toLowerCase().includes('hearing');
+
     const daysAway = (i: Incident) => (i.days_away ?? 0) > 0;
     const restricted = (i: Incident) => (i.days_restricted ?? 0) > 0 && !(daysAway(i));
+
     const deaths = 0;
     const daysAwayCase = records.filter(i => daysAway(i)).length;
     const transferCase = records.filter(i => restricted(i)).length;
     const otherRecordable = records.length - deaths - daysAwayCase - transferCase;
+
     return {
       totalDeaths: deaths,
       totalDaysAwayCase: daysAwayCase,
@@ -116,7 +126,36 @@ export class Osha300aComponent implements OnInit {
 
   onYearChange(year: string): void {
     this.selectedYear.set(Number(year));
+    this.pdfUrl.set('');
+    this.pdfFilename.set('');
   }
+
   print(): void { window.print(); }
-  logout(): void { this.auth.logout(); this.router.navigate(['/login']); }
+
+  async savePdf(): Promise<void> {
+    this.pdfSaving.set(true);
+    this.pdfUrl.set('');
+    this.error.set('');
+
+    const year = this.selectedYear().toString();
+    const site = this.city || this.companyName || 'Establishment';
+    const filename = this.pdfSvc.buildFilename('300A', site, year, `Annual_Summary`);
+    this.pdfFilename.set(filename);
+
+    try {
+      const url = await this.pdfSvc.generateAndUpload('osha-300a-printable', filename, stage => {
+        this.pdfStage.set(stage);
+      });
+      this.pdfUrl.set(url);
+    } catch (e: any) {
+      this.error.set(e.message ?? 'PDF generation failed');
+    } finally {
+      this.pdfSaving.set(false);
+    }
+  }
+
+  logout(): void {
+    this.auth.logout();
+    this.router.navigate(['/login']);
+  }
 }
