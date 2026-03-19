@@ -5,9 +5,15 @@
       <i class="bi bi-speedometer2 fs-5"></i>
       EHS Dashboard
     </span>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 flex-wrap">
       <a class="btn btn-sm btn-outline-light" routerLink="/form">
         <i class="bi bi-plus-circle me-1"></i>New Incident
+      </a>
+      <a class="btn btn-sm btn-outline-warning" routerLink="/osha-300a">
+        <i class="bi bi-file-earmark-text me-1"></i>OSHA 300A
+      </a>
+      <a class="btn btn-sm btn-outline-warning" routerLink="/osha-301">
+        <i class="bi bi-file-medical me-1"></i>OSHA 301
       </a>
       <button class="btn btn-sm btn-outline-light" (click)="loadData()">
         <i class="bi bi-arrow-clockwise me-1"></i>Refresh
@@ -196,9 +202,14 @@
                 <span *ngIf="!inc.osha_recordable" class="text-muted small">—</span>
               </td>
               <td (click)="$event.stopPropagation()">
-                <button class="btn btn-sm btn-outline-primary py-0" (click)="openDetail(inc)">
-                  <i class="bi bi-eye"></i>
-                </button>
+                <div class="d-flex gap-1">
+                  <button class="btn btn-sm btn-outline-primary py-0" (click)="openDetail(inc)" title="View Detail">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  <a class="btn btn-sm btn-outline-warning py-0" [routerLink]="['/osha-301', inc.id]" title="OSHA 301 Report">
+                    <i class="bi bi-file-medical"></i>
+                  </a>
+                </div>
               </td>
             </tr>
           </tbody>
