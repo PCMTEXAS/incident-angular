@@ -153,6 +153,35 @@ export class SupabaseService {
     return { url: data.publicUrl, error: null };
   }
 
+  // ── OSHA PDF STORAGE ──────────────────────────────────────────
+  async uploadOshaPdf(filename: string, blob: Blob): Promise<{ url: string | null; error: any }> {
+    const { error } = await this.supabase.storage
+      .from('osha-pdfs')
+      .upload(filename, blob, { upsert: true, contentType: 'application/pdf' });
+    if (error) return { url: null, error };
+    const { data } = this.supabase.storage.from('osha-pdfs').getPublicUrl(filename);
+    return { url: data.publicUrl, error: null };
+  }
+
+  async listOshaPdfs(): Promise<{ name: string; publicUrl: string; created_at?: string }[]> {
+    const { data, error } = await this.supabase.storage.from('osha-pdfs').list('', {
+      limit: 200,
+      offset: 0,
+      sortBy: { column: 'created_at', order: 'desc' }
+    });
+    if (error || !data) return [];
+    return data.map(f => ({
+      name: f.name,
+      created_at: f.created_at,
+      publicUrl: this.supabase.storage.from('osha-pdfs').getPublicUrl(f.name).data.publicUrl
+    }));
+  }
+
+  async deleteOshaPdf(filename: string): Promise<{ error: any }> {
+    const { error } = await this.supabase.storage.from('osha-pdfs').remove([filename]);
+    return { error };
+  }
+
   // ── STATS ──────────────────────────────────────────────────────
   async getStats(): Promise<{ total: number; open: number; recordable: number; thisMonth: number }> {
     const { data } = await this.supabase.from('incidents').select('status, osha_recordable, incident_date');
@@ -191,7 +220,6 @@ export class SupabaseService {
       .single();
     if (!data) return null;
     if (data.invite_expires_at && new Date(data.invite_expires_at) < new Date()) return null;
-    // temp_password is stored separately; return the token so login can pre-fill
     return { user_id: data.user_id, temp_password: token };
   }
 
