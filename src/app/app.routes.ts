@@ -38,5 +38,10 @@ export const routes: Routes = [
     loadComponent: () => import('./components/osha-301/osha-301').then(m => m.Osha301Component),
     canActivate: [authGuard]
   },
+  {
+    path: 'osha-reports',
+    loadComponent: () => import('./components/osha-reports/osha-reports').then(m => m.OshaReportsComponent),
+    canActivate: [authGuard]
+  },
   { path: '**', redirectTo: 'login' }
 ];
