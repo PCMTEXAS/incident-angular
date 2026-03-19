@@ -1,0 +1,129 @@
+<!-- NAV -->
+<nav class="navbar navbar-dark py-2 shadow-sm no-print" style="background-color:#0057A8">
+  <div class="container-fluid px-4">
+    <span class="navbar-brand d-flex align-items-center gap-2 fw-bold">
+      <i class="bi bi-file-medical fs-5"></i>
+      OSHA 301 — Injury and Illness Incident Report
+    </span>
+    <div class="d-flex gap-2">
+      <a class="btn btn-sm btn-outline-light" routerLink="/dashboard"><i class="bi bi-arrow-left me-1"></i>Dashboard</a>
+      <a class="btn btn-sm btn-outline-light" routerLink="/osha-300a"><i class="bi bi-file-earmark-text me-1"></i>OSHA 300A</a>
+      @if (selectedIncident()) {
+        <button class="btn btn-sm btn-warning fw-semibold" (click)="print()"><i class="bi bi-printer me-1"></i>Print / Save PDF</button>
+      }
+      <button class="btn btn-sm btn-outline-light" (click)="logout()"><i class="bi bi-box-arrow-right me-1"></i>Logout</button>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid py-4 px-3 px-md-4">
+  @if (loading()) {
+    <div class="text-center py-5"><div class="spinner-border text-primary" role="status" style="width:3rem;height:3rem"></div><p class="text-muted mt-3">Loading incidents…</p></div>
+  }
+  @if (error() && !loading()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2"><i class="bi bi-exclamation-circle-fill fs-5"></i><span>{{ error() }}</span><button class="btn btn-sm btn-danger ms-auto" (click)="loadIncidents()">Retry</button></div>
+  }
+  <div class="card border-0 shadow-sm mb-4 no-print" [class.d-none]="loading()">
+    <div class="card-body">
+      <label for="incidentSelect" class="form-label fw-bold mb-1">Select Incident to Generate OSHA 301 Report</label>
+      <div class="row g-2 align-items-center">
+        <div class="col-12 col-md-6">
+          <select id="incidentSelect" class="form-select" [value]="selectedId()" (change)="onSelectIncident($any($event.target).value)">
+            <option value="">— Choose an incident —</option>
+            @for (inc of incidents(); track inc.id) {
+              <option [value]="inc.id">{{ inc.incident_id }} | {{ inc.incident_date }} | {{ inc.involved_first }} {{ inc.involved_last }} | {{ inc.incident_site }}@if (inc.osha_recordable) { (OSHA Recordable) }</option>
+            }
+          </select>
+        </div>
+        <div class="col-auto"><span class="text-muted small">{{ incidents().length }} incident(s) loaded</span></div>
+      </div>
+      @if (!selectedIncident() && !loading()) {
+        <div class="alert alert-info mt-3 mb-0 d-flex align-items-center gap-2 small"><i class="bi bi-info-circle-fill"></i>Select an incident above to populate the OSHA 301 form.</div>
+      }
+    </div>
+  </div>
+</div>
+
+@if (selectedIncident()) {
+  <div class="osha301-form container py-3 px-4" id="osha301-form">
+    <div class="border border-dark p-2 text-center mb-0">
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="text-start small"><strong>U.S. Department of Labor</strong><br>Occupational Safety and Health Administration</div>
+        <div><div class="fw-bold fs-5">OSHA's Form 301</div><div class="fw-bold">Injury and Illness Incident Report</div><div class="small text-muted">It is not necessary to record this form with OSHA.</div></div>
+        <div class="text-end small"><strong>OMB No. 1218-0176</strong></div>
+      </div>
+    </div>
+    <div class="border border-top-0 border-dark p-2 small mb-0 bg-light">Information about the case is collected to help track injury and illness trends. This form must be kept on file for 5 years.</div>
+    <div class="border border-top-0 border-dark p-3 mb-0">
+      <div class="section-title fw-bold mb-2 text-uppercase text-primary small">1 — Information About the Employee</div>
+      <div class="row g-2">
+        <div class="col-12 col-md-3"><label class="form-label tiny-label">Full Name</label><div class="form-control form-control-sm bg-light">{{ inc?.involved_first }} {{ inc?.involved_last }}</div></div>
+        <div class="col-12 col-md-3"><label class="form-label tiny-label">Street</label><input class="form-control form-control-sm" [(ngModel)]="employeeAddress" placeholder="Employee Street Address"></div>
+        <div class="col-6 col-md-2"><label class="form-label tiny-label">Date of Birth</label><input class="form-control form-control-sm" type="date" [(ngModel)]="employeeDOB"></div>
+        <div class="col-6 col-md-2"><label class="form-label tiny-label">Date Hired</label><div class="form-control form-control-sm bg-light">{{ inc?.hire_date || '—' }}</div></div>
+        <div class="col-6 col-md-2"><label class="form-label tiny-label">Gender</label><select class="form-select form-select-sm" [(ngModel)]="employeeGender"><option value="">— Select —</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select></div>
+      </div>
+    </div>
+    <div class="border border-top-0 border-dark p-3 mb-0">
+      <div class="section-title fw-bold mb-2 text-uppercase text-primary small">2 — Physician or Health Care Professional</div>
+      <div class="row g-2">
+        <div class="col-12 col-md-4"><label class="form-label tiny-label">Name of Physician / Professional</label><input class="form-control form-control-sm" [(ngModel)]="physicianName" placeholder="Physician / Facility Name"></div>
+        <div class="col-12 col-md-4"><label class="form-label tiny-label">Facility (if away from worksite)</label><input class="form-control form-control-sm" [(ngModel)]="physicianFacility" placeholder="Facility name"></div>
+        <div class="col-12 col-md-2"><label class="form-label tiny-label">Address</label><input class="form-control form-control-sm" [(ngModel)]="physicianStreet" placeholder="Street, City, State ZIP"></div>
+        <div class="col-6 col-md-1"><label class="form-label tiny-label">ER?</label><div class="form-check mt-1"><input class="form-check-input" type="checkbox" [(ngModel)]="treatedEmergencyRoom" id="erCheck"><label class="form-check-label small" for="erCheck">Yes</label></div></div>
+        <div class="col-6 col-md-1"><label class="form-label tiny-label">Hospitalized?</label><div class="form-check mt-1"><input class="form-check-input" type="checkbox" [(ngModel)]="hospitalizedOvernight" id="hospCheck"><label class="form-check-label small" for="hospCheck">Yes</label></div></div>
+      </div>
+    </div>
+    <div class="border border-top-0 border-dark p-3 mb-0">
+      <div class="section-title fw-bold mb-2 text-uppercase text-primary small">3 — Information About the Case</div>
+      <div class="row g-2">
+        <div class="col-6 col-md-2"><label class="form-label tiny-label">Case Number</label><div class="form-control form-control-sm bg-light">{{ inc?.incident_id }}</div></div>
+        <div class="col-6 col-md-2"><label class="form-label tiny-label">Date of Injury/Illness</label><div class="form-control form-control-sm bg-light">{{ inc?.incident_date }}</div></div>
+        <div class="col-6 col-md-2"><label class="form-label tiny-label">Time of Injury</label><div class="form-control form-control-sm bg-light">{{ inc?.incident_time || '—' }}</div></div>
+        <div class="col-6 col-md-2"><label class="form-label tiny-label">Time Began Work</label><input class="form-control form-control-sm" type="time"></div>
+        <div class="col-12 col-md-4"><label class="form-label tiny-label">What was employee doing before incident?</label><textarea class="form-control form-control-sm" rows="2" [value]="inc?.immediate_actions || ''" placeholder="Describe activity..."></textarea></div>
+      </div>
+      <div class="row g-2 mt-1">
+        <div class="col-12 col-md-4"><label class="form-label tiny-label">Where did the event occur?</label><div class="form-control form-control-sm bg-light" style="min-height:2.5rem">{{ inc?.incident_site }}{{ inc?.incident_area ? ' — ' + inc?.incident_area : '' }}</div></div>
+        <div class="col-12 col-md-4"><label class="form-label tiny-label">What happened?</label><textarea class="form-control form-control-sm" rows="3" [value]="inc?.description || ''" placeholder="Describe the event..."></textarea></div>
+        <div class="col-12 col-md-4"><label class="form-label tiny-label">What was the injury or illness?</label><div class="form-control form-control-sm bg-light" style="min-height:2.5rem">{{ inc?.injury_type || typeLabel(inc?.incident_type) }}@if (inc?.body_part) { — {{ inc?.body_part }} }@if (inc?.body_area) { ({{ inc?.body_area }}) }</div></div>
+      </div>
+      <div class="row g-2 mt-1">
+        <div class="col-12 col-md-4"><label class="form-label tiny-label">What object or substance harmed the employee?</label><div class="form-control form-control-sm bg-light" style="min-height:2.5rem">{{ inc?.equipment_involved || '—' }}</div></div>
+      </div>
+    </div>
+    <div class="border border-top-0 border-dark p-3 mb-0 bg-light">
+      <div class="section-title fw-bold mb-2 text-uppercase text-primary small">4 — Classification</div>
+      <div class="row g-3">
+        <div class="col-6 col-md-3"><label class="form-label tiny-label">Medical Treatment</label><div class="form-control form-control-sm bg-white">{{ inc?.medical_treatment || '—' }}</div></div>
+        <div class="col-6 col-md-2"><label class="form-label tiny-label">Days Away</label><div class="form-control form-control-sm bg-white text-center fw-bold">{{ inc?.days_away ?? 0 }}</div></div>
+        <div class="col-6 col-md-2"><label class="form-label tiny-label">Days Restricted</label><div class="form-control form-control-sm bg-white text-center fw-bold">{{ inc?.days_restricted ?? 0 }}</div></div>
+        <div class="col-6 col-md-2"><label class="form-label tiny-label">OSHA Recordable</label><div class="mt-1">@if (inc?.osha_recordable) {<span class="badge bg-warning text-dark">Recordable</span>} @else {<span class="badge bg-success">Not Recordable</span>}</div></div>
+        <div class="col-12 col-md-3"><label class="form-label tiny-label">Root Cause</label><div class="form-control form-control-sm bg-white text-capitalize">{{ inc?.root_cause_category || '—' }}</div></div>
+      </div>
+    </div>
+    @if (inc?.corrective_actions?.length) {
+      <div class="border border-top-0 border-dark p-3 mb-0">
+        <div class="section-title fw-bold mb-2 text-uppercase text-primary small">Corrective Actions</div>
+        <table class="table table-sm table-bordered mb-0"><thead class="table-light small"><tr><th>Description</th><th>Assigned To</th><th>Due Date</th><th>Status</th><th>Priority</th></tr></thead>
+        <tbody>@for (action of inc?.corrective_actions; track $index) {<tr class="small"><td>{{ action.description }}</td><td>{{ action.assignee }}</td><td>{{ action.due_date }}</td><td>{{ action.status }}</td><td>{{ action.priority }}</td></tr>}</tbody></table>
+      </div>
+    }
+    @if (inc?.witnesses?.length) {
+      <div class="border border-top-0 border-dark p-3 mb-0">
+        <div class="section-title fw-bold mb-2 text-uppercase text-primary small">Witnesses</div>
+        <div class="row g-2">@for (w of inc?.witnesses; track $index) {<div class="col-12 col-md-4 small"><div class="border rounded p-2"><strong>{{ w.name }}</strong> — {{ w.phone }}<br><span class="text-muted">{{ w.statement }}</span></div></div>}</div>
+      </div>
+    }
+    <div class="border border-top-0 border-dark p-3">
+      <div class="section-title fw-bold mb-2 text-uppercase text-primary small">Completed By</div>
+      <div class="row g-2">
+        <div class="col-12 col-md-4"><label class="form-label tiny-label">Name</label><input class="form-control form-control-sm" [(ngModel)]="preparedBy" placeholder="Full name"></div>
+        <div class="col-12 col-md-2"><label class="form-label tiny-label">Title</label><input class="form-control form-control-sm" [(ngModel)]="preparedTitle" placeholder="Title"></div>
+        <div class="col-12 col-md-2"><label class="form-label tiny-label">Phone</label><input class="form-control form-control-sm" [(ngModel)]="preparedPhone" placeholder="(xxx) xxx-xxxx"></div>
+        <div class="col-12 col-md-2"><label class="form-label tiny-label">Date</label><input class="form-control form-control-sm" type="date" [(ngModel)]="preparedDate"></div>
+        <div class="col-12 col-md-2"><label class="form-label tiny-label">Supervisor</label><div class="form-control form-control-sm bg-light">{{ inc?.supervisor_name || '—' }}</div></div>
+      </div>
+    </div>
+  </div>
+}
