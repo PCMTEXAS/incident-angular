@@ -23,5 +23,20 @@ export const routes: Routes = [
     loadComponent: () => import('./components/admin/admin').then(m => m.AdminComponent),
     canActivate: [adminGuard]
   },
+  {
+    path: 'osha-300a',
+    loadComponent: () => import('./components/osha-300a/osha-300a').then(m => m.Osha300aComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'osha-301',
+    loadComponent: () => import('./components/osha-301/osha-301').then(m => m.Osha301Component),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'osha-301/:id',
+    loadComponent: () => import('./components/osha-301/osha-301').then(m => m.Osha301Component),
+    canActivate: [authGuard]
+  },
   { path: '**', redirectTo: 'login' }
 ];
