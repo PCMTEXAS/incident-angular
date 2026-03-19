@@ -1,0 +1,172 @@
+<!-- NAV -->
+<nav class="navbar navbar-dark py-2 shadow-sm no-print" style="background-color:#0057A8">
+  <div class="container-fluid px-4">
+    <span class="navbar-brand d-flex align-items-center gap-2 fw-bold">
+      <i class="bi bi-file-earmark-text fs-5"></i>
+      OSHA 300A — Annual Summary
+    </span>
+    <div class="d-flex gap-2">
+      <a class="btn btn-sm btn-outline-light" routerLink="/dashboard">
+        <i class="bi bi-arrow-left me-1"></i>Dashboard
+      </a>
+      <a class="btn btn-sm btn-outline-light" routerLink="/osha-301">
+        <i class="bi bi-file-medical me-1"></i>OSHA 301
+      </a>
+      <button class="btn btn-sm btn-warning fw-semibold" (click)="print()">
+        <i class="bi bi-printer me-1"></i>Print / Save PDF
+      </button>
+      <button class="btn btn-sm btn-outline-light" (click)="logout()">
+        <i class="bi bi-box-arrow-right me-1"></i>Logout
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid py-4 px-3 px-md-4 no-print">
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status" style="width:3rem;height:3rem"></div>
+      <p class="text-muted mt-3">Loading incident data…</p>
+    </div>
+  }
+  @if (error() && !loading()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2">
+      <i class="bi bi-exclamation-circle-fill fs-5"></i>
+      <span>{{ error() }}</span>
+      <button class="btn btn-sm btn-danger ms-auto" (click)="loadData()">Retry</button>
+    </div>
+  }
+</div>
+
+<div class="osha-form container py-3 px-4" id="osha300a-form">
+  <div class="no-print d-flex align-items-center gap-3 mb-3">
+    <label class="fw-semibold mb-0" for="yearSelect">Reporting Year:</label>
+    <select id="yearSelect" class="form-select form-select-sm w-auto"
+            [value]="selectedYear()" (change)="onYearChange($any($event.target).value)">
+      @for (y of availableYears; track y) { <option [value]="y">{{ y }}</option> }
+    </select>
+    <span class="badge bg-warning text-dark">{{ yearRecords().length }} OSHA-recordable incidents found</span>
+    @if (!loading() && !error()) {
+      <span class="text-success small fw-semibold"><i class="bi bi-check-circle me-1"></i>Fill in establishment info below, then Print</span>
+    }
+  </div>
+  <div class="form-header text-center border border-dark p-2 mb-0">
+    <div class="d-flex justify-content-between align-items-start">
+      <div class="text-start" style="font-size:0.7rem"><strong>U.S. Department of Labor</strong><br>Occupational Safety and Health Administration</div>
+      <div>
+        <div class="fw-bold fs-5">OSHA's Form 300A (Rev. 01/2004)</div>
+        <div class="fw-bold">Summary of Work-Related Injuries and Illnesses</div>
+        <div class="small text-muted">Year {{ selectedYear() }}</div>
+      </div>
+      <div class="text-end" style="font-size:0.7rem"><strong>OMB No. 1218-0176</strong></div>
+    </div>
+  </div>
+  <div class="border border-top-0 border-dark p-3 mb-0">
+    <div class="row g-2">
+      <div class="col-12 col-md-6"><label class="form-label small fw-bold mb-0">Establishment Name</label><input class="form-control form-control-sm" [(ngModel)]="companyName" placeholder="Your Company Name"></div>
+      <div class="col-12 col-md-6"><label class="form-label small fw-bold mb-0">Industry Description (NAICS Code)</label><input class="form-control form-control-sm" [(ngModel)]="naicsCode" placeholder="e.g., 325211"></div>
+      <div class="col-12 col-md-5"><label class="form-label small fw-bold mb-0">Street</label><input class="form-control form-control-sm" [(ngModel)]="street" placeholder="Street Address"></div>
+      <div class="col-6 col-md-3"><label class="form-label small fw-bold mb-0">City</label><input class="form-control form-control-sm" [(ngModel)]="city" placeholder="City"></div>
+      <div class="col-3 col-md-2"><label class="form-label small fw-bold mb-0">State</label><input class="form-control form-control-sm" [(ngModel)]="state" placeholder="TX"></div>
+      <div class="col-3 col-md-2"><label class="form-label small fw-bold mb-0">ZIP</label><input class="form-control form-control-sm" [(ngModel)]="zip" placeholder="ZIP"></div>
+    </div>
+  </div>
+  <div class="border border-top-0 border-dark p-3 mb-0 bg-light">
+    <div class="row g-2 align-items-end">
+      <div class="col-12 col-md-4"><label class="form-label small fw-bold mb-0">Annual Average Number of Employees</label><input class="form-control form-control-sm" type="number" [(ngModel)]="annualAvgEmployees" placeholder="0"></div>
+      <div class="col-12 col-md-4"><label class="form-label small fw-bold mb-0">Total Hours Worked by All Employees Last Year</label><input class="form-control form-control-sm" type="number" [(ngModel)]="totalHoursWorked" placeholder="0"></div>
+      <div class="col-12 col-md-4 small text-muted">Include all employees: full-time, part-time, temporary, seasonal, salaried, and hourly.</div>
+    </div>
+  </div>
+  <div class="border border-top-0 border-dark p-2 bg-dark text-white text-center fw-bold mb-0">Injury and Illness Summary</div>
+  <div class="border border-top-0 border-dark mb-0">
+    <table class="table table-bordered table-sm mb-0 summary-table">
+      <thead class="table-secondary">
+        <tr>
+          <th class="text-center" style="width:5%">(G)</th><th class="text-center" style="width:10%">(H)</th>
+          <th class="text-center" style="width:10%">(I)</th><th class="text-center" style="width:10%">(J)</th>
+          <th class="text-center" style="width:12%">(K)</th><th class="text-center" style="width:12%">(L)</th>
+          <th colspan="6" class="text-center">(M) Injury and Illness Types</th>
+        </tr>
+        <tr class="small">
+          <th class="text-center align-top">Deaths</th><th class="text-center align-top">Days Away<br>from Work</th>
+          <th class="text-center align-top">Job Transfer<br>or Restriction</th><th class="text-center align-top">Other<br>Recordable Cases</th>
+          <th class="text-center align-top">Total Days<br>Away from Work</th><th class="text-center align-top">Total Days<br>Job Transfer</th>
+          <th class="text-center align-top">(M1)<br>Injuries</th><th class="text-center align-top">(M2)<br>Skin Disorders</th>
+          <th class="text-center align-top">(M3)<br>Respiratory</th><th class="text-center align-top">(M4)<br>Poisonings</th>
+          <th class="text-center align-top">(M5)<br>Hearing Loss</th><th class="text-center align-top">(M6)<br>All Other</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr><td colspan="12" class="text-center py-3"><span class="spinner-border spinner-border-sm text-primary me-2"></span>Loading…</td></tr>
+        } @else {
+          <tr class="totals-row">
+            <td class="text-center fw-bold fs-5">{{ summary().totalDeaths }}</td>
+            <td class="text-center fw-bold fs-5 text-danger">{{ summary().totalDaysAwayCase }}</td>
+            <td class="text-center fw-bold fs-5 text-warning">{{ summary().totalTransferCase }}</td>
+            <td class="text-center fw-bold fs-5">{{ summary().totalOtherRecordable }}</td>
+            <td class="text-center fw-bold fs-5 text-primary">{{ summary().totalDaysAwayCount }}</td>
+            <td class="text-center fw-bold fs-5 text-primary">{{ summary().totalDaysRestrictedCount }}</td>
+            <td class="text-center fw-bold fs-5">{{ summary().totalInjuries }}</td>
+            <td class="text-center fw-bold fs-5">{{ summary().totalSkinDisorders }}</td>
+            <td class="text-center fw-bold fs-5">{{ summary().totalRespiratory }}</td>
+            <td class="text-center fw-bold fs-5">{{ summary().totalPoisonings }}</td>
+            <td class="text-center fw-bold fs-5">{{ summary().totalHearingLoss }}</td>
+            <td class="text-center fw-bold fs-5">{{ summary().totalOtherIllness }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <div class="border border-top-0 border-dark p-2 bg-light d-flex align-items-center gap-3">
+    <span class="fw-bold">Total number of deaths, injuries, and illnesses:</span>
+    <span class="badge bg-dark fs-6 px-3 py-2">{{ summary().totalRecordable }}</span>
+  </div>
+  <div class="border border-top-0 border-dark p-3 bg-warning bg-opacity-10 mb-0">
+    <div class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>Post this Summary page from February 1 to April 30 of the year following the year covered by the form.</div>
+  </div>
+  <div class="border border-top-0 border-dark p-3">
+    <div class="fw-bold mb-2">Certification</div>
+    <p class="small mb-2">I certify that I have examined this document and that to the best of my knowledge the entries are true, accurate, and complete.</p>
+    <div class="row g-3">
+      <div class="col-12 col-md-5"><label class="form-label small fw-bold mb-0">Company Executive</label><input class="form-control form-control-sm" [(ngModel)]="certifiedBy" placeholder="Name of highest ranking company official"></div>
+      <div class="col-12 col-md-3"><label class="form-label small fw-bold mb-0">Title</label><input class="form-control form-control-sm" [(ngModel)]="certifiedTitle" placeholder="Title"></div>
+      <div class="col-12 col-md-2"><label class="form-label small fw-bold mb-0">Phone</label><input class="form-control form-control-sm" placeholder="(xxx) xxx-xxxx"></div>
+      <div class="col-12 col-md-2"><label class="form-label small fw-bold mb-0">Date</label><input class="form-control form-control-sm" type="date"></div>
+    </div>
+  </div>
+  <div class="no-print mt-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header d-flex align-items-center gap-2" style="background-color:#0057A8;color:#fff">
+        <i class="bi bi-table"></i><span class="fw-bold">OSHA 300 Log — Recordable Incidents ({{ selectedYear() }})</span>
+        <span class="badge bg-light text-dark ms-2">{{ yearRecords().length }}</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+          <thead class="table-light"><tr class="small">
+            <th>Case #</th><th>Employee Name</th><th>Job Title</th><th>Date</th><th>Where</th>
+            <th>Injury/Illness</th><th>Days Away</th><th>Days Restricted</th><th>OSHA 301</th>
+          </tr></thead>
+          <tbody>
+            @for (inc of yearRecords(); track inc.id) {
+              <tr>
+                <td class="fw-semibold text-primary">{{ inc.incident_id }}</td>
+                <td>{{ inc.involved_first }} {{ inc.involved_last }}</td>
+                <td>{{ inc.job_title || '—' }}</td>
+                <td class="small">{{ inc.incident_date }}</td>
+                <td class="small">{{ inc.incident_site }}</td>
+                <td class="small">{{ inc.injury_type || inc.incident_type }}</td>
+                <td class="text-center">{{ inc.days_away || 0 }}</td>
+                <td class="text-center">{{ inc.days_restricted || 0 }}</td>
+                <td><a class="btn btn-xs btn-outline-primary py-0 px-2 small" [routerLink]="['/osha-301', inc.id]">View 301</a></td>
+              </tr>
+            } @empty {
+              <tr><td colspan="9" class="text-center py-4 text-muted"><i class="bi bi-inbox d-block fs-4 mb-1"></i>No OSHA-recordable incidents for {{ selectedYear() }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
