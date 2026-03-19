@@ -1,0 +1,21 @@
+.osha-form {
+  max-width: 1200px;
+  font-size: 0.85rem;
+}
+.summary-table th, .summary-table td {
+  font-size: 0.78rem;
+  vertical-align: middle;
+  padding: 0.35rem 0.4rem;
+}
+.totals-row td {
+  background-color: #f0f7ff;
+  border-top: 2px solid #0057A8 !important;
+}
+.form-header { background-color: #f8f9fa; }
+@media print {
+  .no-print { display: none !important; }
+  nav { display: none !important; }
+  .osha-form { max-width: 100%; padding: 0; font-size: 0.78rem; }
+  .container-fluid.py-4 { display: none !important; }
+  .summary-table th, .summary-table td { font-size: 0.72rem; padding: 0.2rem 0.3rem; }
+}
