@@ -1,0 +1,8 @@
+.font-monospace {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.78rem;
+}
+
+@media print {
+  nav { display: none !important; }
+}
