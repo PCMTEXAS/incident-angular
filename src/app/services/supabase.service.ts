@@ -172,7 +172,7 @@ export class SupabaseService {
     if (error || !data) return [];
     return data.map(f => ({
       name: f.name,
-      created_at: f.created_at,
+      created_at: f.created_at ?? undefined,
       publicUrl: this.supabase.storage.from('osha-pdfs').getPublicUrl(f.name).data.publicUrl
     }));
   }
