@@ -1,3 +1,4 @@
+@use 'sass:color';
 // Global styles — Bootstrap loaded via angular.json
 
 $dc-blue: #0057A8;
@@ -18,8 +19,8 @@ body {
   background-color: $dc-blue;
   border-color: $dc-blue;
   &:hover, &:focus, &:active {
-    background-color: darken($dc-blue, 8%);
-    border-color: darken($dc-blue, 8%);
+    background-color: color.adjust($dc-blue, $lightness: -8%);
+    border-color: color.adjust($dc-blue, $lightness: -8%);
   }
 }
 
