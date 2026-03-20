@@ -86,7 +86,10 @@ export class IncidentFormComponent implements OnInit {
     }
   }
   prevStep() { if (this.currentStep > 1) this.currentStep--; }
-  goToStep(step: number) { if (step <= this.currentStep) this.currentStep = step; }
+  goToStep(step: number) {
+    this.currentStep = step;
+    if (step === 6 && !this.aiAnalysis && !this.aiLoading) this.runAiAnalysis();
+  }
 
   async searchEmployee() {
     if (!this.empQuery.trim()) return;

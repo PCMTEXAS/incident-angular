@@ -26,8 +26,11 @@
     <div class="d-grid gap-2">
       <p class="text-muted small mb-3"><i class="bi bi-envelope me-1"></i>Confirmation emails have been sent to the reporter and supervisor on record.</p>
       <button class="btn btn-success" (click)="printReport()">
-        <i class="bi bi-file-earmark-pdf me-2"></i>Save as PDF / Print Report
+        <i class="bi bi-printer me-2"></i>Print / Save as PDF
       </button>
+      <a class="btn btn-outline-warning" [routerLink]="['/osha-301']">
+        <i class="bi bi-file-medical me-2"></i>Generate OSHA 301 Report
+      </a>
       <button class="btn btn-primary" (click)="newIncident()">
         <i class="bi bi-plus-circle me-2"></i>Report Another Incident
       </button>
@@ -53,12 +56,13 @@
              [style.width.%]="stepProgress"
              style="background-color:#0057A8"></div>
       </div>
-      <!-- Step pills -->
+      <!-- Step pills — click any tab to navigate freely -->
       <div class="d-flex gap-1 flex-wrap">
         <button *ngFor="let label of stepLabels; let i = index"
                 class="btn btn-sm step-pill"
                 [class.active]="currentStep === i+1"
                 [class.done]="currentStep > i+1"
+                [title]="label"
                 (click)="goToStep(i+1)">
           <span class="step-num me-1">{{ i+1 }}</span>{{ label }}
         </button>
@@ -597,12 +601,12 @@
           </div>
 
           <!-- ── Navigation buttons ─────────────────────────────── -->
-          <div class="d-flex justify-content-between mt-4" *ngIf="currentStep < 6 || !submitSuccess">
+          <div class="d-flex justify-content-between mt-4" *ngIf="!submitSuccess">
             <button class="btn btn-outline-secondary" *ngIf="currentStep > 1" (click)="prevStep()">
               <i class="bi bi-arrow-left me-1"></i>Previous
             </button>
             <div *ngIf="currentStep === 1"></div>
-            <button class="btn btn-primary" *ngIf="currentStep < 6" (click)="nextStep()">
+            <button class="btn btn-primary" *ngIf="currentStep < totalSteps" (click)="nextStep()">
               Next <i class="bi bi-arrow-right ms-1"></i>
             </button>
           </div>

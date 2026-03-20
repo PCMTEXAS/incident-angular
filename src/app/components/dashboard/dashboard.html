@@ -18,6 +18,9 @@
       <a class="btn btn-sm btn-outline-warning" routerLink="/osha-reports">
         <i class="bi bi-folder2-open me-1"></i>Reports Folder
       </a>
+      <a class="btn btn-sm btn-outline-light" routerLink="/admin">
+        <i class="bi bi-people me-1"></i>Users
+      </a>
       <button class="btn btn-sm btn-outline-light" (click)="loadData()">
         <i class="bi bi-arrow-clockwise me-1"></i>Refresh
       </button>
@@ -33,7 +36,7 @@
   <!-- ── LOADING / ERROR ───────────────────────────────────── -->
   <div *ngIf="loading" class="text-center py-5">
     <div class="spinner-border text-primary" role="status" style="width:3rem;height:3rem"></div>
-    <p class="text-muted mt-3">Loading incidents from Supabase…</p>
+    <p class="text-muted mt-3">Loading incidents…</p>
   </div>
 
   <div *ngIf="error && !loading" class="alert alert-danger d-flex align-items-center gap-2">
@@ -76,168 +79,326 @@
       </div>
     </div>
 
-    <!-- ── FILTERS ───────────────────────────────────────────── -->
-    <div class="card border-0 shadow-sm mb-4">
-      <div class="card-body p-3">
-        <div class="row g-2 align-items-end">
-          <div class="col-12 col-sm-6 col-md-3 col-lg-2">
-            <label class="form-label small fw-semibold mb-1">Search</label>
-            <input class="form-control form-control-sm" [(ngModel)]="searchText"
-                   (ngModelChange)="applyFilters()" placeholder="ID, name, site…">
-          </div>
-          <div class="col-6 col-sm-3 col-md-2 col-lg-2">
-            <label class="form-label small fw-semibold mb-1">Status</label>
-            <select class="form-select form-select-sm" [(ngModel)]="filterStatus" (change)="applyFilters()">
-              <option *ngFor="let s of STATUSES" [value]="s">{{ s || 'All Statuses' }}</option>
-            </select>
-          </div>
-          <div class="col-6 col-sm-3 col-md-2 col-lg-2">
-            <label class="form-label small fw-semibold mb-1">Type</label>
-            <select class="form-select form-select-sm" [(ngModel)]="filterType" (change)="applyFilters()">
-              <option *ngFor="let t of INCIDENT_TYPES" [value]="t">{{ t ? typeLabel(t) : 'All Types' }}</option>
-            </select>
-          </div>
-          <div class="col-6 col-sm-3 col-md-2 col-lg-2">
-            <label class="form-label small fw-semibold mb-1">Site</label>
-            <select class="form-select form-select-sm" [(ngModel)]="filterSite" (change)="applyFilters()">
-              <option *ngFor="let s of SITES" [value]="s">{{ s || 'All Sites' }}</option>
-            </select>
-          </div>
-          <div class="col-6 col-sm-3 col-md-2 col-lg-2">
-            <label class="form-label small fw-semibold mb-1">From</label>
-            <input class="form-control form-control-sm" type="date" [(ngModel)]="filterFrom" (change)="applyFilters()">
-          </div>
-          <div class="col-6 col-sm-3 col-md-2 col-lg-1">
-            <label class="form-label small fw-semibold mb-1">To</label>
-            <input class="form-control form-control-sm" type="date" [(ngModel)]="filterTo" (change)="applyFilters()">
-          </div>
-          <div class="col-auto d-flex gap-2">
-            <button class="btn btn-sm btn-outline-secondary" (click)="clearFilters()" title="Clear filters">
-              <i class="bi bi-x-circle"></i>
-            </button>
+    <!-- ── TABS ──────────────────────────────────────────────── -->
+    <ul class="nav nav-tabs mb-3">
+      <li class="nav-item">
+        <button class="nav-link fw-semibold" [class.active]="activeTab === 'list'" (click)="showTab('list')">
+          <i class="bi bi-table me-1"></i>Incident Log
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link fw-semibold" [class.active]="activeTab === 'charts'" (click)="showTab('charts')">
+          <i class="bi bi-bar-chart-line me-1"></i>Analytics &amp; Charts
+        </button>
+      </li>
+    </ul>
+
+    <!-- ══ LIST TAB ══════════════════════════════════════════════ -->
+    <div *ngIf="activeTab === 'list'">
+
+      <!-- ── FILTERS ───────────────────────────────────────────── -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-3">
+          <div class="row g-2 align-items-end">
+            <div class="col-12 col-sm-6 col-md-3 col-lg-2">
+              <label class="form-label small fw-semibold mb-1">Search</label>
+              <input class="form-control form-control-sm" [(ngModel)]="searchText"
+                     (ngModelChange)="applyFilters()" placeholder="ID, name, site…">
+            </div>
+            <div class="col-6 col-sm-3 col-md-2 col-lg-2">
+              <label class="form-label small fw-semibold mb-1">Status</label>
+              <select class="form-select form-select-sm" [(ngModel)]="filterStatus" (change)="applyFilters()">
+                <option *ngFor="let s of STATUSES" [value]="s">{{ s || 'All Statuses' }}</option>
+              </select>
+            </div>
+            <div class="col-6 col-sm-3 col-md-2 col-lg-2">
+              <label class="form-label small fw-semibold mb-1">Type</label>
+              <select class="form-select form-select-sm" [(ngModel)]="filterType" (change)="applyFilters()">
+                <option *ngFor="let t of INCIDENT_TYPES" [value]="t">{{ t ? typeLabel(t) : 'All Types' }}</option>
+              </select>
+            </div>
+            <div class="col-6 col-sm-3 col-md-2 col-lg-2">
+              <label class="form-label small fw-semibold mb-1">Site</label>
+              <select class="form-select form-select-sm" [(ngModel)]="filterSite" (change)="applyFilters()">
+                <option *ngFor="let s of SITES" [value]="s">{{ s || 'All Sites' }}</option>
+              </select>
+            </div>
+            <div class="col-6 col-sm-3 col-md-2 col-lg-2">
+              <label class="form-label small fw-semibold mb-1">From</label>
+              <input class="form-control form-control-sm" type="date" [(ngModel)]="filterFrom" (change)="applyFilters()">
+            </div>
+            <div class="col-6 col-sm-3 col-md-2 col-lg-1">
+              <label class="form-label small fw-semibold mb-1">To</label>
+              <input class="form-control form-control-sm" type="date" [(ngModel)]="filterTo" (change)="applyFilters()">
+            </div>
+            <div class="col-auto d-flex gap-2">
+              <button class="btn btn-sm btn-outline-secondary" (click)="clearFilters()" title="Clear filters">
+                <i class="bi bi-x-circle"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- ── EXPORT BUTTONS ────────────────────────────────────── -->
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-      <span class="text-muted small">
-        Showing <strong>{{ pagedIncidents.length }}</strong> of <strong>{{ filteredIncidents.length }}</strong> incidents
-      </span>
-      <div class="d-flex gap-2">
-        <button class="btn btn-sm btn-outline-warning fw-semibold" (click)="exportOsha300()">
-          <i class="bi bi-file-earmark-spreadsheet me-1"></i>OSHA 300 Export
-        </button>
-        <button class="btn btn-sm btn-outline-secondary" (click)="exportAll()">
-          <i class="bi bi-download me-1"></i>Export CSV
-        </button>
-      </div>
-    </div>
-
-    <!-- ── TABLE ─────────────────────────────────────────────── -->
-    <div class="card border-0 shadow-sm mb-4">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0 incident-table">
-          <thead class="table-dark" style="--bs-table-bg:#0057A8">
-            <tr>
-              <th class="sortable" (click)="sort('incident_id')">
-                Case # <i class="bi ms-1" [ngClass]="sortIcon('incident_id')"></i>
-              </th>
-              <th class="sortable" (click)="sort('incident_date')">
-                Date <i class="bi ms-1" [ngClass]="sortIcon('incident_date')"></i>
-              </th>
-              <th class="sortable" (click)="sort('incident_type')">
-                Type <i class="bi ms-1" [ngClass]="sortIcon('incident_type')"></i>
-              </th>
-              <th>Involved Person</th>
-              <th class="sortable" (click)="sort('incident_site')">
-                Site <i class="bi ms-1" [ngClass]="sortIcon('incident_site')"></i>
-              </th>
-              <th>Urgency</th>
-              <th class="sortable" (click)="sort('status')">
-                Status <i class="bi ms-1" [ngClass]="sortIcon('status')"></i>
-              </th>
-              <th>OSHA</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngIf="!pagedIncidents.length">
-              <td colspan="9" class="text-center py-5 text-muted">
-                <i class="bi bi-inbox display-6 d-block mb-2"></i>
-                No incidents match the current filters
-              </td>
-            </tr>
-            <tr *ngFor="let inc of pagedIncidents" class="cursor-pointer" (click)="openDetail(inc)">
-              <td>
-                <span class="fw-semibold text-primary">{{ inc.incident_id }}</span>
-              </td>
-              <td>
-                <span class="small">{{ inc.incident_date || '—' }}</span>
-              </td>
-              <td>
-                <span class="badge bg-secondary text-capitalize">{{ typeLabel(inc.incident_type) }}</span>
-              </td>
-              <td>
-                <span class="small">{{ inc.involved_first }} {{ inc.involved_last }}</span>
-                <div class="text-muted" style="font-size:0.72rem">{{ inc.department }}</div>
-              </td>
-              <td class="small">{{ inc.incident_site || '—' }}</td>
-              <td>
-                <span class="badge" [ngClass]="urgencyBadge(inc.urgency)" style="font-size:0.7rem">
-                  {{ inc.urgency | titlecase }}
-                </span>
-              </td>
-              <td>
-                <select class="form-select form-select-sm status-select"
-                        [value]="inc.status"
-                        (change)="updateStatus(inc, $any($event.target).value)"
-                        (click)="$event.stopPropagation()"
-                        [disabled]="updatingId === inc.id">
-                  <option *ngFor="let s of STATUSES.slice(1)" [value]="s">{{ s }}</option>
-                </select>
-              </td>
-              <td>
-                <span *ngIf="inc.osha_recordable" class="badge bg-warning text-dark" style="font-size:0.7rem">
-                  <i class="bi bi-exclamation-triangle me-1"></i>Recordable
-                </span>
-                <span *ngIf="!inc.osha_recordable" class="text-muted small">—</span>
-              </td>
-              <td (click)="$event.stopPropagation()">
-                <div class="d-flex gap-1">
-                  <button class="btn btn-sm btn-outline-primary py-0" (click)="openDetail(inc)" title="View Detail">
-                    <i class="bi bi-eye"></i>
-                  </button>
-                  <a class="btn btn-sm btn-outline-warning py-0" [routerLink]="['/osha-301', inc.id]" title="OSHA 301 Report">
-                    <i class="bi bi-file-medical"></i>
-                  </a>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ── PAGINATION ────────────────────────────────────────── -->
-    <nav *ngIf="totalPages > 1">
-      <ul class="pagination pagination-sm justify-content-center">
-        <li class="page-item" [class.disabled]="currentPage === 1">
-          <button class="page-link" (click)="currentPage = currentPage - 1">
-            <i class="bi bi-chevron-left"></i>
+      <!-- ── EXPORT BUTTONS ────────────────────────────────────── -->
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <span class="text-muted small">
+          Showing <strong>{{ pagedIncidents.length }}</strong> of <strong>{{ filteredIncidents.length }}</strong> incidents
+        </span>
+        <div class="d-flex gap-2">
+          <button class="btn btn-sm btn-outline-warning fw-semibold" (click)="exportOsha300()">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i>OSHA 300 Export
           </button>
-        </li>
-        <li *ngFor="let p of pages" class="page-item" [class.active]="currentPage === p">
-          <button class="page-link" (click)="currentPage = p">{{ p }}</button>
-        </li>
-        <li class="page-item" [class.disabled]="currentPage === totalPages">
-          <button class="page-link" (click)="currentPage = currentPage + 1">
-            <i class="bi bi-chevron-right"></i>
+          <button class="btn btn-sm btn-outline-secondary" (click)="exportAll()">
+            <i class="bi bi-download me-1"></i>Export CSV
           </button>
-        </li>
-      </ul>
-    </nav>
+        </div>
+      </div>
+
+      <!-- ── TABLE ─────────────────────────────────────────────── -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 incident-table">
+            <thead class="table-dark" style="--bs-table-bg:#0057A8">
+              <tr>
+                <th class="sortable" (click)="sort('incident_id')">
+                  Case # <i class="bi ms-1" [ngClass]="sortIcon('incident_id')"></i>
+                </th>
+                <th class="sortable" (click)="sort('incident_date')">
+                  Date <i class="bi ms-1" [ngClass]="sortIcon('incident_date')"></i>
+                </th>
+                <th class="sortable" (click)="sort('incident_type')">
+                  Type <i class="bi ms-1" [ngClass]="sortIcon('incident_type')"></i>
+                </th>
+                <th>Involved Person</th>
+                <th class="sortable" (click)="sort('incident_site')">
+                  Site <i class="bi ms-1" [ngClass]="sortIcon('incident_site')"></i>
+                </th>
+                <th>Urgency</th>
+                <th class="sortable" (click)="sort('status')">
+                  Status <i class="bi ms-1" [ngClass]="sortIcon('status')"></i>
+                </th>
+                <th>OSHA</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="!pagedIncidents.length">
+                <td colspan="9" class="text-center py-5 text-muted">
+                  <i class="bi bi-inbox display-6 d-block mb-2"></i>
+                  No incidents match the current filters
+                </td>
+              </tr>
+              <tr *ngFor="let inc of pagedIncidents" class="cursor-pointer" (click)="openDetail(inc)">
+                <td><span class="fw-semibold text-primary">{{ inc.incident_id }}</span></td>
+                <td><span class="small">{{ inc.incident_date || '—' }}</span></td>
+                <td><span class="badge bg-secondary text-capitalize">{{ typeLabel(inc.incident_type) }}</span></td>
+                <td>
+                  <span class="small">{{ inc.involved_first }} {{ inc.involved_last }}</span>
+                  <div class="text-muted" style="font-size:0.72rem">{{ inc.department }}</div>
+                </td>
+                <td class="small">{{ inc.incident_site || '—' }}</td>
+                <td>
+                  <span class="badge" [ngClass]="urgencyBadge(inc.urgency)" style="font-size:0.7rem">
+                    {{ inc.urgency | titlecase }}
+                  </span>
+                </td>
+                <td>
+                  <select class="form-select form-select-sm status-select"
+                          [value]="inc.status"
+                          (change)="updateStatus(inc, $any($event.target).value)"
+                          (click)="$event.stopPropagation()"
+                          [disabled]="updatingId === inc.id">
+                    <option *ngFor="let s of STATUSES.slice(1)" [value]="s">{{ s }}</option>
+                  </select>
+                </td>
+                <td>
+                  <span *ngIf="inc.osha_recordable" class="badge bg-warning text-dark" style="font-size:0.7rem">
+                    <i class="bi bi-exclamation-triangle me-1"></i>Recordable
+                  </span>
+                  <span *ngIf="!inc.osha_recordable" class="text-muted small">—</span>
+                </td>
+                <td (click)="$event.stopPropagation()">
+                  <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-outline-primary py-0" (click)="openDetail(inc)" title="View Detail">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <a class="btn btn-sm btn-outline-warning py-0" [routerLink]="['/osha-301', inc.id]" title="OSHA 301 Report">
+                      <i class="bi bi-file-medical"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── PAGINATION ────────────────────────────────────────── -->
+      <nav *ngIf="totalPages > 1">
+        <ul class="pagination pagination-sm justify-content-center">
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <button class="page-link" (click)="currentPage = currentPage - 1">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+          </li>
+          <li *ngFor="let p of pages" class="page-item" [class.active]="currentPage === p">
+            <button class="page-link" (click)="currentPage = p">{{ p }}</button>
+          </li>
+          <li class="page-item" [class.disabled]="currentPage === totalPages">
+            <button class="page-link" (click)="currentPage = currentPage + 1">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+    </div><!-- /list tab -->
+
+    <!-- ══ CHARTS TAB ════════════════════════════════════════════ -->
+    <div *ngIf="activeTab === 'charts'">
+
+      <!-- KPI row -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+          <div class="card border-0 shadow-sm text-center p-3 h-100">
+            <i class="bi bi-percent fs-2 text-primary mb-1"></i>
+            <div class="display-6 fw-bold text-primary">{{ recordablePct }}%</div>
+            <div class="text-muted small">OSHA Recordable Rate</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 shadow-sm text-center p-3 h-100">
+            <i class="bi bi-clock-history fs-2 text-warning mb-1"></i>
+            <div class="display-6 fw-bold text-warning">{{ avgDaysToClose }}</div>
+            <div class="text-muted small">Avg Days to Close</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 shadow-sm text-center p-3 h-100">
+            <i class="bi bi-graph-down-arrow fs-2 text-success mb-1"></i>
+            <div class="display-6 fw-bold text-success">{{ monthChartData[11]?.count ?? 0 }}</div>
+            <div class="text-muted small">Incidents This Month</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 shadow-sm text-center p-3 h-100">
+            <i class="bi bi-building-check fs-2 text-info mb-1"></i>
+            <div class="display-6 fw-bold text-info">{{ siteChartData.length }}</div>
+            <div class="text-muted small">Active Sites Reporting</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts row 1 -->
+      <div class="row g-4 mb-4">
+        <div class="col-12 col-xl-8">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header fw-bold d-flex align-items-center gap-2" style="background:#0057A8;color:#fff">
+              <i class="bi bi-calendar-range"></i>12-Month Incident Trend
+            </div>
+            <div class="card-body p-3">
+              <canvas #monthChart style="max-height:280px"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-xl-4">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header fw-bold d-flex align-items-center gap-2" style="background:#0057A8;color:#fff">
+              <i class="bi bi-pie-chart"></i>Incidents by Type
+            </div>
+            <div class="card-body p-3 d-flex align-items-center justify-content-center">
+              <canvas #typeChart style="max-height:260px"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts row 2 -->
+      <div class="row g-4 mb-4">
+        <div class="col-12 col-xl-8">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header fw-bold d-flex align-items-center gap-2" style="background:#0057A8;color:#fff">
+              <i class="bi bi-geo-alt"></i>Incidents by Site
+            </div>
+            <div class="card-body p-3">
+              <canvas #siteChart style="max-height:300px"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-xl-4">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header fw-bold d-flex align-items-center gap-2" style="background:#0057A8;color:#fff">
+              <i class="bi bi-check2-circle"></i>Status Breakdown
+            </div>
+            <div class="card-body p-3 d-flex align-items-center justify-content-center">
+              <canvas #statusChart style="max-height:260px"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary tables -->
+      <div class="row g-4">
+        <div class="col-12 col-lg-6">
+          <div class="card border-0 shadow-sm">
+            <div class="card-header fw-semibold bg-light">
+              <i class="bi bi-list-ul text-primary me-2"></i>Type Summary
+            </div>
+            <div class="card-body p-0">
+              <table class="table table-sm table-hover mb-0">
+                <thead class="table-light">
+                  <tr><th>Type</th><th class="text-center">Count</th><th>Share</th></tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let row of typeChartData">
+                    <td class="fw-semibold">{{ row.label }}</td>
+                    <td class="text-center">{{ row.count }}</td>
+                    <td style="min-width:130px">
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="progress flex-grow-1" style="height:7px">
+                          <div class="progress-bar" style="background:#0057A8" [style.width.%]="row.pct"></div>
+                        </div>
+                        <small class="text-muted">{{ row.pct }}%</small>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-lg-6">
+          <div class="card border-0 shadow-sm">
+            <div class="card-header fw-semibold bg-light">
+              <i class="bi bi-geo text-primary me-2"></i>Site Summary
+            </div>
+            <div class="card-body p-0">
+              <table class="table table-sm table-hover mb-0">
+                <thead class="table-light">
+                  <tr><th>Site</th><th class="text-center">Count</th><th>Share</th></tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let row of siteChartData">
+                    <td class="fw-semibold">{{ row.label }}</td>
+                    <td class="text-center">{{ row.count }}</td>
+                    <td style="min-width:130px">
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="progress flex-grow-1" style="height:7px">
+                          <div class="progress-bar bg-success" [style.width.%]="row.pct"></div>
+                        </div>
+                        <small class="text-muted">{{ row.pct }}%</small>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /charts tab -->
 
   </div><!-- /!loading -->
 </div><!-- /container -->

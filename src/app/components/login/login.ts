@@ -51,7 +51,7 @@ export class LoginComponent implements OnInit {
     const result = await this.auth.login(this.userId, this.password);
     this.loading = false;
     if (result.success) {
-      this.router.navigate([result.user?.role === 'admin' ? '/admin' : '/dashboard']);
+      this.router.navigate(['/dashboard']); // dashboard is the landing page for all roles
     } else {
       this.errorMessage = result.message;
       this.cdr.detectChanges();
