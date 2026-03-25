@@ -134,9 +134,15 @@ export class SupabaseService {
 
   // ── EMPLOYEES ─────────────────────────────────────────────────
   async searchEmployees(query: string): Promise<{ data: Employee[] | null; error: any }> {
+    // Sanitise search input: strip characters that could break the
+    // PostgREST filter syntax (commas, dots, parens, percent signs).
+    // This prevents filter-injection via the `.or()` string.
+    const sanitised = query.replace(/[%,.*()]/g, '').trim();
+    if (!sanitised) return { data: [], error: null };
+
     const { data, error } = await this.supabase
       .from('employees').select('*')
-      .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,employee_id.ilike.%${query}%`)
+      .or(`first_name.ilike.%${sanitised}%,last_name.ilike.%${sanitised}%,employee_id.ilike.%${sanitised}%`)
       .eq('status', 'Active').limit(10);
     return { data, error };
   }

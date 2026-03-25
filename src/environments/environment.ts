@@ -1,7 +1,17 @@
+/*
+ * Development environment configuration.
+ *
+ * All sensitive values are injected at build time via Angular's
+ * `fileReplacements` (see angular.json) or via a custom build script.
+ *
+ * For local development, create a `.env` file at the project root
+ * (see `.env.example`) and run the `npm run config` script before
+ * `ng serve` to generate this file with real values.
+ *
+ * NEVER commit real keys to source control.
+ */
 export const environment = {
   production: false,
-  supabaseUrl: 'https://tnlxzzjxqourhjvunuxi.supabase.co',
-  supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRubHh6emp4cW91cmhqdnVudXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MDI4OTYsImV4cCI6MjA4OTA3ODg5Nn0.2XmejeUrjaHRLh7Ma-b0eiwwG4TAvbkb-LJa1IiR4os',
-  validId: 'VIPLS',
-  validPassword: 'DC2026'
+  supabaseUrl: 'SUPABASE_URL_PLACEHOLDER',
+  supabaseKey: 'SUPABASE_ANON_KEY_PLACEHOLDER',
 };

@@ -39,6 +39,22 @@ testem.log
 /typings
 __screenshots__/
 
+# ── Secrets & environment files ──────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# ── Vercel local state ──────────────────────────────────────
+.vercel
+
 # System files
 .DS_Store
 Thumbs.db

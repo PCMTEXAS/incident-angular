@@ -20,6 +20,17 @@ export interface AppUser {
 export class AuthService {
   constructor(private supabase: SupabaseService) {}
 
+  /**
+   * Hash a password using SHA-256 (browser-native SubtleCrypto).
+   *
+   * ⚠️  SECURITY NOTE — Best practice for password storage:
+   * SHA-256 is NOT suitable for production password hashing because it
+   * is too fast and vulnerable to brute-force / rainbow-table attacks.
+   * Prefer bcrypt (cost ≥ 12) or Argon2id on the server side.
+   * This client-side hash is only a transport-level measure; the real
+   * protection must happen server-side (e.g. Supabase Edge Function or
+   * a backend API that hashes with bcrypt/Argon2 before storing).
+   */
   async hashPassword(password: string): Promise<string> {
     const encoder = new TextEncoder();
     const data = encoder.encode(password);
@@ -60,17 +71,8 @@ export class AuthService {
       return { success: false, message: `Account locked. Try again in ${mins} minute(s).` };
     }
 
-    // Hard-coded admin bypass
-    if (id.trim().toUpperCase() === 'VIPLS' && password === 'DC2026') {
-      const adminUser: AppUser = {
-        id: 'admin', user_id: 'VIPLS', name: 'System Admin',
-        email: 'patrick@pcmtexas.com', role: 'admin', is_temp_password: false
-      };
-      this.setSession(adminUser);
-      localStorage.removeItem(ATTEMPTS_KEY);
-      localStorage.removeItem(LOCKOUT_KEY);
-      return { success: true, message: 'Login successful', user: adminUser };
-    }
+    // All users (including admins) authenticate against the app_users table
+    // in Supabase.  Never hard-code credentials in source code.
 
     // Supabase user lookup
     const hash = await this.hashPassword(password);
