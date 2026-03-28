@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npx ng build --configuration=production",
+  "buildCommand": "node scripts/set-env.js --prod && npx ng build --configuration=production",
   "outputDirectory": "dist/incident-ng/browser",
   "installCommand": "npm install",
   "framework": null,
