@@ -27,9 +27,14 @@ export const environment = {
 };
 `;
 
-const target = isProd
-  ? path.join(__dirname, '..', 'src', 'environments', 'environment.prod.ts')
-  : path.join(__dirname, '..', 'src', 'environments', 'environment.ts');
+const targets = isProd
+  ? [
+      path.join(__dirname, '..', 'src', 'environments', 'environment.prod.ts'),
+      path.join(__dirname, '..', 'src', 'environments', 'environment.ts')
+    ]
+  : [path.join(__dirname, '..', 'src', 'environments', 'environment.ts')];
 
-fs.writeFileSync(target, content, 'utf-8');
-console.log(`✅ Wrote ${isProd ? 'production' : 'development'} environment → ${target}`);
+targets.forEach(target => {
+  fs.writeFileSync(target, content, 'utf-8');
+  console.log(`✅ Wrote environment → ${target}`);
+});
