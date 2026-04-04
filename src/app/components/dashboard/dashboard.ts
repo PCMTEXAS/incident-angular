@@ -51,7 +51,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   activeTab: 'list' | 'charts' = 'list';
 
   readonly STATUSES = ['', 'Open', 'In Progress', 'Pending Review', 'Closed'];
-  readonly INCIDENT_TYPES = ['', 'injury', 'illness', 'nearmiss', 'vehicle', 'environmental', 'property', 'contractor', 'security', 'observation'];
+  readonly INCIDENT_TYPES = ['', 'injury', 'illness', 'nearmiss', 'vehicle', 'environmental', 'property', 'contractor', 'security', 'observation', 'chemical_exposure', 'slip_fall', 'equipment_contact', 'vehicle_damage', 'customer_incident'];
   readonly SITES = ['', 'Deer Park', 'Baytown', 'Texas City', 'La Porte', 'Pasadena', 'Freeport', 'Port Arthur', 'Corporate HQ'];
 
   // Chart data arrays
@@ -320,7 +320,10 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     const map: Record<string,string> = {
       injury:'Injury',illness:'Illness',nearmiss:'Near Miss',vehicle:'Vehicle',
       environmental:'Environmental',property:'Property',contractor:'Contractor',
-      security:'Security',observation:'Observation'
+      security:'Security',observation:'Observation',
+      chemical_exposure:'Chemical Exposure',slip_fall:'Slip & Fall',
+      equipment_contact:'Equipment Contact',vehicle_damage:'Vehicle Damage',
+      customer_incident:'Customer Incident'
     };
     return map[t || ''] || t || '—';
   }

@@ -65,7 +65,13 @@ export class IncidentFormComponent implements OnInit {
     {value:'property',label:'Property Damage',icon:'bi-building-x'},
     {value:'contractor',label:'Contractor',icon:'bi-person-gear'},
     {value:'security',label:'Security',icon:'bi-shield-exclamation'},
-    {value:'observation',label:'Observation',icon:'bi-eye'}
+    {value:'observation',label:'Observation',icon:'bi-eye'},
+    // Car wash–specific types
+    {value:'chemical_exposure',label:'Chemical Exposure',icon:'bi-flask'},
+    {value:'slip_fall',label:'Slip & Fall',icon:'bi-moisture'},
+    {value:'equipment_contact',label:'Equipment Contact',icon:'bi-gear-wide-connected'},
+    {value:'vehicle_damage',label:'Vehicle Damage',icon:'bi-car-front'},
+    {value:'customer_incident',label:'Customer Incident',icon:'bi-person-exclamation'}
   ];
 
   constructor(private supabase: SupabaseService, private auth: AuthService, private router: Router) {}
@@ -125,6 +131,12 @@ export class IncidentFormComponent implements OnInit {
     if (this.form.incident_type === 'nearmiss' || this.form.incident_type === 'observation') {
       this.form.osha_recordable = false; this.form.osha_result = 'Not recordable — Near miss/observation'; return;
     }
+    if (this.form.incident_type === 'customer_incident') {
+      this.form.osha_recordable = false; this.form.osha_result = 'Not recordable — Customer (non-employee) incident'; return;
+    }
+    if (this.form.incident_type === 'vehicle_damage') {
+      this.form.osha_recordable = false; this.form.osha_result = 'Not recordable — Property/vehicle damage only (no personal injury)'; return;
+    }
     if (this.form.work_related === 'no') {
       this.form.osha_recordable = false; this.form.osha_result = 'Not recordable — Not work-related'; return;
     }
@@ -169,7 +181,10 @@ export class IncidentFormComponent implements OnInit {
       injury:'Occupational Injury', illness:'Occupational Illness', nearmiss:'Near-Miss Event',
       vehicle:'Vehicle / Fleet Incident', environmental:'Environmental Release',
       property:'Property Damage', contractor:'Contractor Incident',
-      security:'Security Incident', observation:'Safety Observation'
+      security:'Security Incident', observation:'Safety Observation',
+      chemical_exposure:'Chemical Exposure', slip_fall:'Slip & Fall',
+      equipment_contact:'Equipment Contact / Entanglement', vehicle_damage:'Customer Vehicle Damage',
+      customer_incident:'Customer Incident'
     };
     lines.push(`**Classification:** ${typeLabels[type] || type}`);
     lines.push(`**Location:** ${site} — ${area}`);
@@ -181,6 +196,34 @@ export class IncidentFormComponent implements OnInit {
     if (type === 'injury') { recs.push('📋 Conduct immediate job-site hazard reassessment'); recs.push('🦺 Verify PPE compliance in this work area'); }
     if (type === 'vehicle') recs.push('🚗 Remove vehicle from service; review driver records');
     if (type === 'environmental') recs.push('🌿 Initiate release protocol; notify HSE manager immediately');
+    if (type === 'chemical_exposure') {
+      recs.push('🧪 Identify chemical(s) involved; pull SDS immediately');
+      recs.push('🚿 Ensure proper decontamination — flush affected area 15+ minutes');
+      recs.push('🦺 Verify chemical-handling PPE (gloves, goggles, apron) was available and worn');
+      recs.push('📋 Review chemical dilution ratios and dispensing equipment for leaks/misfires');
+    }
+    if (type === 'slip_fall') {
+      recs.push('💧 Inspect drainage, anti-slip mats, and floor surfaces in affected area');
+      recs.push('👟 Verify proper footwear policy for all wash bay personnel');
+      recs.push('🚧 Post wet floor signage; restrict area until surface is safe');
+    }
+    if (type === 'equipment_contact') {
+      recs.push('⛔ Lock out / tag out affected equipment immediately (LOTO)');
+      recs.push('🔧 Inspect conveyor, brushes, and rollers for guarding deficiencies');
+      recs.push('📋 Review equipment contact / entanglement prevention procedures with all staff');
+    }
+    if (type === 'vehicle_damage') {
+      recs.push('📸 Document vehicle damage with photos before customer departs');
+      recs.push('📝 Collect customer contact information and insurance details');
+      recs.push('🔧 Inspect conveyor tracking, guide rails, and tire stops for misalignment');
+      recs.push('📋 Review pre-wash vehicle inspection checklist adherence');
+    }
+    if (type === 'customer_incident') {
+      recs.push('🚨 Ensure customer received appropriate care; offer to call EMS if needed');
+      recs.push('📝 Collect customer statement and contact information immediately');
+      recs.push('📸 Preserve scene; capture photos of hazard location');
+      recs.push('⚖️ Notify management — potential liability claim; preserve all records');
+    }
     if (this.form.training_deficiency) recs.push('📚 Prioritize refresher training for affected personnel');
     if (daysAway >= 1) recs.push(`🏥 Coordinate return-to-work program (${daysAway} lost days)`);
     recs.push('📸 Preserve incident scene; collect physical evidence');
