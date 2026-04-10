@@ -49,7 +49,11 @@ export class AuthService {
     try {
       const res = await fetch(this.loginUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': environment.supabaseKey,
+          'Authorization': `Bearer ${environment.supabaseKey}`,
+        },
         body: JSON.stringify({ user_id: userId, password }),
       });
 
