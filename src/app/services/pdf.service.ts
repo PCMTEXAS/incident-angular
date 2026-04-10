@@ -18,10 +18,22 @@ export interface OshaPdfMeta {
 export class PdfService {
   private supabase = inject(SupabaseService);
 
-  /** Build a clean filename from site, date, and person/year name */
+  /**
+   * Build a collision-safe filename for OSHA PDFs.
+   *
+   * Includes a UTC timestamp and a random 8-character hex suffix so that
+   * regenerating a report for the same year/site never overwrites an
+   * existing file in Supabase Storage.  OSHA 29 CFR 1904.33 requires
+   * 5-year retention — silent overwrites via upsert were a compliance risk.
+   *
+   * Example: OSHA_300A_Deer_Park_2025_Annual_Summary_20260409T143022Z_a1b2c3d4.pdf
+   */
   buildFilename(type: '301' | '300A', site: string, date: string, name: string): string {
-    const clean = (s: string) => (s ?? 'Unknown').replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
-    return `OSHA_${type}_${clean(site)}_${clean(date)}_${clean(name)}.pdf`;
+    const clean = (s: string) =>
+      (s ?? 'Unknown').replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+    const ts  = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', 'T');
+    const uid = crypto.randomUUID().replace(/-/g, '').slice(0, 8);
+    return `OSHA_${type}_${clean(site)}_${clean(date)}_${clean(name)}_${ts}Z_${uid}.pdf`;
   }
 
   /**

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -12,49 +12,44 @@ import { AuthService } from '../../services/auth.service';
   styleUrl: './login.scss'
 })
 export class LoginComponent implements OnInit {
-  userId = '';
-  password = '';
+  private auth  = inject(AuthService);
+  private router = inject(Router);
+  private route  = inject(ActivatedRoute);
+
+  userId       = '';
+  password     = '';
   showPassword = false;
   errorMessage = '';
-  loading = false;
-  inviteMode = false;
-  inviteMsg = '';
+  loading      = false;
+  inviteMsg    = '';
 
-  constructor(
-    private auth: AuthService,
-    private router: Router,
-    private route: ActivatedRoute,
-    private cdr: ChangeDetectorRef
-  ) {}
-
-  async ngOnInit() {
+  async ngOnInit(): Promise<void> {
     const token = this.route.snapshot.queryParamMap.get('invite');
-    if (token) {
-      this.loading = true;
-      const result = await this.auth.loginWithInviteToken(token);
-      this.loading = false;
-      if (result) {
-        this.userId = result.user_id;
-        this.password = result.temp_password;
-        this.inviteMode = true;
-        this.inviteMsg = `Welcome! Your User ID has been pre-filled. Enter your temporary password to sign in.`;
-      } else {
-        this.errorMessage = 'This invite link has expired or is invalid. Please contact your administrator.';
-      }
-      this.cdr.detectChanges();
+    if (!token) return;
+
+    this.loading = true;
+    const result = await this.auth.loginWithInviteToken(token);
+    this.loading = false;
+
+    if (result) {
+      this.userId   = result.user_id;
+      this.password = result.temp_password;
+      this.inviteMsg = 'Welcome! Your User ID has been pre-filled. Enter your temporary password to sign in.';
+    } else {
+      this.errorMessage = 'This invite link has expired or is invalid. Please contact your administrator.';
     }
   }
 
-  async onSubmit() {
+  async onSubmit(): Promise<void> {
     this.errorMessage = '';
     this.loading = true;
     const result = await this.auth.login(this.userId, this.password);
     this.loading = false;
+
     if (result.success) {
-      this.router.navigate(['/dashboard']); // dashboard is the landing page for all roles
+      this.router.navigate(['/dashboard']);
     } else {
       this.errorMessage = result.message;
-      this.cdr.detectChanges();
     }
   }
 }

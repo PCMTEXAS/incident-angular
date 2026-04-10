@@ -1,11 +1,10 @@
-import { Injectable } from '@angular/core';
-import { SupabaseService } from './supabase.service';
+import { Injectable, inject, NgZone } from '@angular/core';
+import { Router } from '@angular/router';
+import { environment } from '../../environments/environment';
 
-const AUTH_KEY = 'incidentApp_auth';
-const AUTH_USER_KEY = 'incidentApp_user';
-const LOCKOUT_KEY = 'incidentApp_lockout';
-const ATTEMPTS_KEY = 'incidentApp_attempts';
-const MAX_ATTEMPTS = 5;
+const SESSION_AUTH_KEY = 'incidentApp_auth';
+const SESSION_USER_KEY = 'incidentApp_user';
+const IDLE_TIMEOUT_MS  = 30 * 60 * 1000; // 30 minutes
 
 export interface AppUser {
   id: string;
@@ -18,18 +17,106 @@ export interface AppUser {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  constructor(private supabase: SupabaseService) {}
+  private router = inject(Router);
+  private zone   = inject(NgZone);
+
+  private idleTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly loginUrl = `${environment.supabaseUrl}/functions/v1/login`;
+
+  // ── Authentication state ────────────────────────────────────────────────────
+
+  isAuthenticated(): boolean {
+    return sessionStorage.getItem(SESSION_AUTH_KEY) === 'authenticated';
+  }
+
+  isAdmin(): boolean {
+    return this.getCurrentUser()?.role === 'admin';
+  }
+
+  isManager(): boolean {
+    const role = this.getCurrentUser()?.role;
+    return role === 'manager' || role === 'admin';
+  }
+
+  getCurrentUser(): AppUser | null {
+    const raw = sessionStorage.getItem(SESSION_USER_KEY);
+    return raw ? (JSON.parse(raw) as AppUser) : null;
+  }
+
+  // ── Login / Logout ──────────────────────────────────────────────────────────
+
+  async login(userId: string, password: string): Promise<{ success: boolean; message: string; user?: AppUser }> {
+    try {
+      const res = await fetch(this.loginUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, password }),
+      });
+
+      const data = await res.json() as { success: boolean; message: string; user?: AppUser };
+
+      if (data.success && data.user) {
+        this.setSession(data.user);
+        this.startIdleTimer();
+      }
+
+      return data;
+    } catch {
+      return { success: false, message: 'Unable to reach authentication server. Check your connection.' };
+    }
+  }
+
+  logout(): void {
+    sessionStorage.removeItem(SESSION_AUTH_KEY);
+    sessionStorage.removeItem(SESSION_USER_KEY);
+    this.stopIdleTimer();
+    this.router.navigate(['/login']);
+  }
+
+  async loginWithInviteToken(token: string): Promise<{ user_id: string; temp_password: string } | null> {
+    // Import lazily to avoid circular dep with supabase service
+    const { SupabaseService } = await import('./supabase.service');
+    const svc = new SupabaseService();
+    return svc.getUserByInviteToken(token);
+  }
+
+  // ── Idle session timeout ────────────────────────────────────────────────────
 
   /**
-   * Hash a password using SHA-256 (browser-native SubtleCrypto).
-   *
-   * ⚠️  SECURITY NOTE — Best practice for password storage:
-   * SHA-256 is NOT suitable for production password hashing because it
-   * is too fast and vulnerable to brute-force / rainbow-table attacks.
-   * Prefer bcrypt (cost ≥ 12) or Argon2id on the server side.
-   * This client-side hash is only a transport-level measure; the real
-   * protection must happen server-side (e.g. Supabase Edge Function or
-   * a backend API that hashes with bcrypt/Argon2 before storing).
+   * Call once after login to begin tracking user activity.
+   * Bind activity events in the root App component.
+   */
+  startIdleTimer(): void {
+    this.stopIdleTimer();
+    this.zone.runOutsideAngular(() => {
+      this.idleTimer = setTimeout(() => {
+        this.zone.run(() => this.logout());
+      }, IDLE_TIMEOUT_MS);
+    });
+  }
+
+  /** Reset the idle timer on any user activity. */
+  resetIdleTimer(): void {
+    if (this.isAuthenticated()) {
+      this.startIdleTimer();
+    }
+  }
+
+  private stopIdleTimer(): void {
+    if (this.idleTimer !== null) {
+      clearTimeout(this.idleTimer);
+      this.idleTimer = null;
+    }
+  }
+
+  private setSession(user: AppUser): void {
+    sessionStorage.setItem(SESSION_AUTH_KEY, 'authenticated');
+    sessionStorage.setItem(SESSION_USER_KEY, JSON.stringify(user));
+  }
+
+  /**
+   * @deprecated Only kept for admin password-hash operations (user creation).
+   * Login authentication is now handled server-side by the Edge Function.
    */
   async hashPassword(password: string): Promise<string> {
     const encoder = new TextEncoder();
@@ -38,70 +125,5 @@ export class AuthService {
     return Array.from(new Uint8Array(hash))
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
-  }
-
-  isAuthenticated(): boolean {
-    return sessionStorage.getItem(AUTH_KEY) === 'authenticated';
-  }
-
-  isAdmin(): boolean {
-    const user = this.getCurrentUser();
-    return user?.role === 'admin';
-  }
-
-  getCurrentUser(): AppUser | null {
-    const raw = sessionStorage.getItem(AUTH_USER_KEY);
-    return raw ? JSON.parse(raw) : null;
-  }
-
-  private setSession(user: AppUser): void {
-    sessionStorage.setItem(AUTH_KEY, 'authenticated');
-    sessionStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
-  }
-
-  logout(): void {
-    sessionStorage.removeItem(AUTH_KEY);
-    sessionStorage.removeItem(AUTH_USER_KEY);
-  }
-
-  async login(id: string, password: string): Promise<{ success: boolean; message: string; user?: AppUser }> {
-    const lockoutUntil = parseInt(localStorage.getItem(LOCKOUT_KEY) || '0');
-    if (Date.now() < lockoutUntil) {
-      const mins = Math.ceil((lockoutUntil - Date.now()) / 60000);
-      return { success: false, message: `Account locked. Try again in ${mins} minute(s).` };
-    }
-
-    // All users (including admins) authenticate against the app_users table
-    // in Supabase.  Never hard-code credentials in source code.
-
-    // Supabase user lookup
-    const hash = await this.hashPassword(password);
-    const result = await this.supabase.getUserByCredentials(id.trim().toUpperCase(), hash);
-
-    if (result.data) {
-      const u = result.data;
-      const appUser: AppUser = {
-        id: u.id, user_id: u.user_id, name: u.name,
-        email: u.email, role: u.role, is_temp_password: u.is_temp_password
-      };
-      this.setSession(appUser);
-      await this.supabase.updateLastLogin(u.id);
-      localStorage.removeItem(ATTEMPTS_KEY);
-      localStorage.removeItem(LOCKOUT_KEY);
-      return { success: true, message: 'Login successful', user: appUser };
-    }
-
-    const attempts = parseInt(localStorage.getItem(ATTEMPTS_KEY) || '0') + 1;
-    localStorage.setItem(ATTEMPTS_KEY, String(attempts));
-    if (attempts >= MAX_ATTEMPTS) {
-      localStorage.setItem(LOCKOUT_KEY, String(Date.now() + 15 * 60 * 1000));
-      localStorage.removeItem(ATTEMPTS_KEY);
-      return { success: false, message: 'Too many failed attempts. Account locked for 15 minutes.' };
-    }
-    return { success: false, message: `Invalid credentials. ${MAX_ATTEMPTS - attempts} attempt(s) remaining.` };
-  }
-
-  async loginWithInviteToken(token: string): Promise<{ user_id: string; temp_password: string } | null> {
-    return this.supabase.getUserByInviteToken(token);
   }
 }
