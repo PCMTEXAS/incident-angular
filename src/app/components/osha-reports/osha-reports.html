@@ -1,0 +1,103 @@
+<nav class="navbar navbar-pcm px-3">
+  <a class="navbar-brand" routerLink="/dashboard"><i class="bi bi-shield-check me-2"></i>PCMHub</a>
+  <a routerLink="/dashboard" class="btn btn-outline-light btn-sm ms-auto"><i class="bi bi-arrow-left me-1"></i>Dashboard</a>
+</nav>
+
+<div class="container py-4 reports-page">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h4 class="fw-bold mb-0"><i class="bi bi-file-earmark-medical me-2"></i>OSHA Reports</h4>
+    <div class="d-flex gap-2">
+      <select class="form-select form-select-sm" style="width:100px" [(ngModel)]="year" (change)="loadIncidents()">
+        @for (y of [2024,2025,2026]; track y) { <option [value]="y">{{ y }}</option> }
+      </select>
+      <select class="form-select form-select-sm" style="width:140px" [(ngModel)]="site" (change)="loadIncidents()">
+        @for (s of sites; track s) { <option [value]="s">{{ s }}</option> }
+      </select>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card text-center p-3">
+        <div class="fs-3 fw-bold text-primary">{{ incidents.length }}</div>
+        <div class="text-muted small">Total Incidents</div>
+        <a routerLink="/osha-300a" class="btn btn-sm btn-outline-primary mt-2">View 300A</a>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center p-3">
+        <div class="fs-3 fw-bold text-danger">{{ recordables.length }}</div>
+        <div class="text-muted small">OSHA Recordable</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center p-3">
+        <div class="fs-3 fw-bold text-warning">{{ incidents.filter(i => i.incident_type === 'injury').length }}</div>
+        <div class="text-muted small">Injuries</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center p-3">
+        <div class="fs-3 fw-bold text-info">{{ incidents.filter(i => i.incident_type === 'illness').length }}</div>
+        <div class="text-muted small">Illnesses</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OSHA 301 list -->
+  <div class="card mb-4">
+    <div class="card-header d-flex align-items-center justify-content-between">
+      <span class="fw-semibold">OSHA Form 301 — Individual Case Reports</span>
+      <span class="badge bg-secondary">{{ recordables.length }} recordable</span>
+    </div>
+    <div class="card-body p-0">
+      @if (loading()) {
+        <div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover small mb-0">
+            <thead class="table-light"><tr><th>ID</th><th>Date</th><th>Type</th><th>Involved</th><th>Site</th><th>OSHA</th><th>Action</th></tr></thead>
+            <tbody>
+              @for (inc of incidents; track inc.id) {
+                <tr>
+                  <td class="font-monospace">{{ inc.incident_id }}</td>
+                  <td>{{ inc.incident_date }}</td>
+                  <td>{{ inc.incident_type }}</td>
+                  <td>{{ inc.involved_first }} {{ inc.involved_last }}</td>
+                  <td>{{ inc.incident_site }}</td>
+                  <td>@if (inc.osha_recordable) { <span class="badge bg-danger">Recordable</span> } @else { <span class="badge bg-success">N/A</span> }</td>
+                  <td><a [routerLink]="['/osha-301', inc.id]" class="btn btn-sm btn-outline-primary">Form 301</a></td>
+                </tr>
+              } @empty {
+                <tr><td colspan="7" class="text-center text-muted py-3">No incidents for selected filters.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Stored PDFs -->
+  @if (pdfs().length) {
+    <div class="card">
+      <div class="card-header fw-semibold">Stored OSHA PDFs</div>
+      <div class="table-responsive">
+        <table class="table small mb-0">
+          <thead class="table-light"><tr><th>File</th><th>Actions</th></tr></thead>
+          <tbody>
+            @for (pdf of pdfs(); track pdf.name) {
+              <tr>
+                <td>{{ pdf.name }}</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-primary me-1" (click)="getPdfUrl(pdf.name)"><i class="bi bi-download me-1"></i>Open</button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="deletePdf(pdf.name)"><i class="bi bi-trash"></i></button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

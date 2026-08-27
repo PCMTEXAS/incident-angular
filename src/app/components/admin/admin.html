@@ -1,0 +1,85 @@
+<nav class="navbar navbar-pcm px-3">
+  <a class="navbar-brand" routerLink="/dashboard"><i class="bi bi-shield-check me-2"></i>PCMHub</a>
+  <a routerLink="/dashboard" class="btn btn-outline-light btn-sm ms-auto"><i class="bi bi-arrow-left me-1"></i>Dashboard</a>
+</nav>
+
+<div class="container py-4 admin-page">
+  <h4 class="fw-bold mb-4"><i class="bi bi-gear me-2"></i>Admin Panel</h4>
+
+  @if (error()) { <div class="alert alert-danger py-2">{{ error() }}</div> }
+  @if (success()) { <div class="alert alert-success py-2">{{ success() }}</div> }
+
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item"><button class="nav-link" [class.active]="activeTab() === 'users'" (click)="activeTab.set('users')"><i class="bi bi-people me-1"></i>Users</button></li>
+    <li class="nav-item"><button class="nav-link" [class.active]="activeTab() === 'invite'" (click)="activeTab.set('invite')"><i class="bi bi-person-plus me-1"></i>Add User</button></li>
+  </ul>
+
+  @if (activeTab() === 'users') {
+    @if (loading()) {
+      <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle small">
+          <thead class="table-light"><tr><th>User ID</th><th>Name</th><th>Email</th><th>Role</th><th>Site</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            @for (u of users(); track u.id) {
+              <tr>
+                <td class="font-monospace">{{ u.user_id }}</td>
+                <td>{{ u.name }}</td>
+                <td>{{ u.email }}</td>
+                <td><span class="badge bg-{{ roleClass(u.role) }}">{{ u.role }}</span></td>
+                <td>{{ u.site }}</td>
+                <td>
+                  @if (u.locked) { <span class="badge bg-danger">Locked</span> }
+                  @else { <span class="badge bg-success">Active</span> }
+                  @if (u.failed_attempts > 0) { <span class="badge bg-secondary ms-1">{{ u.failed_attempts }} fail(s)</span> }
+                </td>
+                <td>
+                  <select class="form-select form-select-sm d-inline-block" style="width:120px" [value]="u.role" (change)="updateRole(u.id, $any($event.target).value)">
+                    @for (r of roles; track r) { <option [value]="r">{{ r | titlecase }}</option> }
+                  </select>
+                  <button class="btn btn-sm ms-1" [class.btn-outline-danger]="!u.locked" [class.btn-outline-success]="u.locked" (click)="toggleLock(u)">
+                    <i class="bi" [class.bi-lock]="!u.locked" [class.bi-unlock]="u.locked"></i>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="7" class="text-center text-muted">No users found.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+
+  @if (activeTab() === 'invite') {
+    <div class="card p-4" style="max-width:560px">
+      <h5 class="fw-semibold mb-4">Create New User</h5>
+      <div class="row g-3">
+        <div class="col-md-6"><label class="form-label">User ID <span class="text-danger">*</span></label><input class="form-control" [(ngModel)]="inviteForm.user_id" placeholder="e.g. jsmith"></div>
+        <div class="col-md-6"><label class="form-label">Full Name <span class="text-danger">*</span></label><input class="form-control" [(ngModel)]="inviteForm.name"></div>
+        <div class="col-md-6"><label class="form-label">Email</label><input class="form-control" type="email" [(ngModel)]="inviteForm.email"></div>
+        <div class="col-md-6">
+          <label class="form-label">Role</label>
+          <select class="form-select" [(ngModel)]="inviteForm.role">
+            @for (r of roles; track r) { <option [value]="r">{{ r | titlecase }}</option> }
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Site</label>
+          <select class="form-select" [(ngModel)]="inviteForm.site">
+            <option value="">All sites</option>
+            @for (s of sites; track s) { <option [value]="s">{{ s }}</option> }
+          </select>
+        </div>
+        <div class="col-12">
+          <button class="btn btn-primary px-4" (click)="createUser()" [disabled]="saving()">
+            @if (saving()) { <span class="spinner-border spinner-border-sm me-2"></span> }
+            <i class="bi bi-person-plus me-1"></i>Create User
+          </button>
+          <p class="small text-muted mt-2">A temporary password will be generated and displayed once.</p>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,257 @@
+<!-- Navbar -->
+<nav class="navbar navbar-pcm navbar-expand-lg px-3">
+  <a class="navbar-brand" routerLink="/dashboard">
+    <i class="bi bi-shield-check me-2"></i>PCMHub
+  </a>
+  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navMenu">
+    <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/dashboard" routerLinkActive="active">
+          <i class="bi bi-speedometer2 me-1"></i>Dashboard
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/car-wash" routerLinkActive="active">
+          <i class="bi bi-car-front me-1"></i>Car Wash
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/osha-300a" routerLinkActive="active">
+          <i class="bi bi-file-earmark-text me-1"></i>OSHA 300A
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/osha-reports" routerLinkActive="active">
+          <i class="bi bi-archive me-1"></i>Reports
+        </a>
+      </li>
+      @if (auth.isAdmin()) {
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/admin" routerLinkActive="active">
+            <i class="bi bi-gear me-1"></i>Admin
+          </a>
+        </li>
+      }
+      <li class="nav-item ms-lg-2">
+        <a class="nav-link" routerLink="/incident/new">
+          <button class="btn btn-sm btn-light fw-semibold px-3">
+            <i class="bi bi-plus-circle me-1"></i>New Report
+          </button>
+        </a>
+      </li>
+      <li class="nav-item">
+        <span class="nav-link text-white-50 small d-none d-lg-block">{{ user?.name }}</span>
+      </li>
+      <li class="nav-item">
+        <button class="btn btn-sm btn-outline-light ms-lg-1" (click)="auth.logout()">
+          <i class="bi bi-box-arrow-right"></i>
+        </button>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<div class="container-fluid py-4 px-3 px-md-4">
+
+  <!-- EHS KPIs -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card text-center p-3">
+        <div class="fs-1 fw-bold text-blue">{{ kpiTotal() }}</div>
+        <div class="text-muted small">Total EHS Incidents</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-center p-3">
+        <div class="fs-1 fw-bold text-danger">{{ kpiOpen() }}</div>
+        <div class="text-muted small">Open</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-center p-3">
+        <div class="fs-1 fw-bold text-warning">{{ kpiOsha() }}</div>
+        <div class="text-muted small">OSHA Recordable</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-center p-3">
+        <div class="fs-1 fw-bold text-success">{{ kpiMonth() }}</div>
+        <div class="text-muted small">This Month</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Car Wash KPIs -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 mb-1">
+      <div class="d-flex align-items-center gap-2">
+        <h6 class="mb-0 fw-semibold text-blue">
+          <i class="bi bi-car-front me-1"></i>Car Wash Incidents
+        </h6>
+        <a routerLink="/car-wash" class="btn btn-sm btn-outline-primary ms-auto">
+          <i class="bi bi-arrow-right me-1"></i>View All
+        </a>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-center p-3 bg-blue-light">
+        <div class="fs-2 fw-bold text-blue">{{ cwTotal() }}</div>
+        <div class="text-muted small">Total</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-center p-3">
+        <div class="fs-2 fw-bold text-warning">{{ cwOpen() }}</div>
+        <div class="text-muted small">Open</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-center p-3">
+        <div class="fs-2 fw-bold text-purple">{{ cwClaims() }}</div>
+        <div class="text-muted small">Claims Active</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-center p-3">
+        <div class="fs-2 fw-bold text-success">{{ cwClosedMonth() }}</div>
+        <div class="text-muted small">Closed This Month</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EHS Incidents -->
+  <div class="card">
+    <div class="card-header d-flex align-items-center flex-wrap gap-2 py-3">
+      <h5 class="mb-0 me-auto fw-semibold">EHS Incidents</h5>
+      <a routerLink="/incident/new" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus me-1"></i>New EHS Report
+      </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="p-3 border-bottom bg-light">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-4">
+          <input class="form-control form-control-sm" type="text" placeholder="Search ID, name, description…" [(ngModel)]="searchText" (keyup.enter)="applyFilters()">
+        </div>
+        <div class="col col-md-2">
+          <select class="form-select form-select-sm" [(ngModel)]="filterStatus" (change)="applyFilters()">
+            <option value="">All Statuses</option>
+            <option>Open</option>
+            <option>In Progress</option>
+            <option>Pending Review</option>
+            <option>Closed</option>
+          </select>
+        </div>
+        <div class="col col-md-2">
+          <select class="form-select form-select-sm" [(ngModel)]="filterType" (change)="applyFilters()">
+            <option value="">All Types</option>
+            @for (t of incidentTypes; track t.value) {
+              <option [value]="t.value">{{ t.label }}</option>
+            }
+          </select>
+        </div>
+        <div class="col col-md-2">
+          <select class="form-select form-select-sm" [(ngModel)]="filterSite" (change)="applyFilters()">
+            <option value="">All Sites</option>
+            @for (s of sites; track s) {
+              <option [value]="s">{{ s }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-auto">
+          <button class="btn btn-sm btn-outline-secondary" (click)="clearFilters()">
+            <i class="bi bi-x-circle me-1"></i>Clear
+          </button>
+        </div>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="p-5 text-center text-muted">
+        <div class="spinner-border text-primary mb-2"></div>
+        <div>Loading incidents…</div>
+      </div>
+    } @else if (error()) {
+      <div class="alert alert-danger m-3">{{ error() }}</div>
+    } @else {
+      <div class="table-wrapper">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>ID</th>
+              <th>Type</th>
+              <th>Site</th>
+              <th>Date</th>
+              <th>Reporter</th>
+              <th>Urgency</th>
+              <th>Status</th>
+              <th>OSHA</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (inc of pagedIncidents; track inc.id) {
+              <tr>
+                <td><a [routerLink]="['/incident', inc.id]" class="fw-semibold text-decoration-none">{{ inc.incident_id }}</a></td>
+                <td class="small">{{ inc.incident_type | titlecase }}</td>
+                <td class="small">{{ inc.incident_site }}</td>
+                <td class="small text-nowrap">{{ inc.incident_date }}</td>
+                <td class="small">{{ inc.reporter_first }} {{ inc.reporter_last }}</td>
+                <td>
+                  <span class="badge bg-{{ urgencyColor(inc.urgency) }}">{{ inc.urgency }}</span>
+                </td>
+                <td>
+                  @if (auth.isManager()) {
+                    <select class="form-select form-select-sm" [value]="inc.status" (change)="updateStatus(inc, $any($event.target).value)">
+                      <option>Open</option>
+                      <option>In Progress</option>
+                      <option>Pending Review</option>
+                      <option>Closed</option>
+                    </select>
+                  } @else {
+                    <span class="badge bg-{{ statusColor(inc.status) }}">{{ inc.status }}</span>
+                  }
+                </td>
+                <td class="text-center">
+                  @if (inc.osha_recordable) {
+                    <span class="badge bg-warning text-dark">Recordable</span>
+                  }
+                </td>
+                <td>
+                  <a [routerLink]="['/incident', inc.id]" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="9" class="text-center text-muted py-5">
+                  <i class="bi bi-inbox fs-2 d-block mb-2"></i>No incidents found
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages > 1) {
+        <div class="d-flex align-items-center justify-content-between px-3 py-2 border-top">
+          <span class="text-muted small">Page {{ page }} of {{ totalPages }}</span>
+          <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-secondary" [disabled]="page <= 1" (click)="page = page - 1">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <button class="btn btn-outline-secondary" [disabled]="page >= totalPages" (click)="page = page + 1">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>

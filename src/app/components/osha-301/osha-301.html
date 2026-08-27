@@ -1,0 +1,54 @@
+<nav class="navbar navbar-pcm px-3 no-print">
+  <a class="navbar-brand" routerLink="/dashboard"><i class="bi bi-shield-check me-2"></i>PCMHub</a>
+  <a routerLink="/osha-reports" class="btn btn-outline-light btn-sm ms-auto me-2"><i class="bi bi-arrow-left me-1"></i>OSHA Reports</a>
+  <button class="btn btn-outline-light btn-sm" (click)="print()"><i class="bi bi-printer me-1"></i>Print</button>
+</nav>
+
+<div class="container py-4">
+  @if (loading()) {
+    <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+  } @else if (error()) {
+    <div class="alert alert-danger">{{ error() }}</div>
+  } @else if (!inc) {
+    <div class="alert alert-warning">Incident not found.</div>
+  } @else {
+    <div class="osha-301-form mx-auto">
+      <div class="p-2 text-center fw-bold border-bottom border-dark" style="background:#555;color:#fff;">OSHA's Form 301 — Injury and Illness Incident Report</div>
+      <div class="p-2 text-center small border-bottom border-dark">Information about the employee (complete for privacy)</div>
+
+      <!-- Section A: Employee -->
+      <div class="section-head">A — Information about the employee</div>
+      <div class="field-row"><div class="field-label">Full name</div><div class="field-value">{{ inc.involved_first }} {{ inc.involved_last }}</div></div>
+      <div class="field-row"><div class="field-label">Street / City / State / ZIP</div><div class="field-value">&mdash;</div></div>
+      <div class="field-row"><div class="field-label">Date of birth</div><div class="field-value">&mdash;</div></div>
+      <div class="field-row"><div class="field-label">Date hired</div><div class="field-value">{{ inc.hire_date || '—' }}</div></div>
+      <div class="field-row"><div class="field-label">Gender</div><div class="field-value">&mdash;</div></div>
+
+      <!-- Section B: Physician -->
+      <div class="section-head">B — Information about the physician or other health care professional</div>
+      <div class="field-row"><div class="field-label">Name of physician/HCP</div><div class="field-value">&mdash;</div></div>
+      <div class="field-row"><div class="field-label">Facility</div><div class="field-value">&mdash;</div></div>
+      <div class="field-row"><div class="field-label">Was employee treated in ER?</div><div class="field-value">{{ inc.medical_treatment === 'emergency_room' ? 'Yes' : 'No' }}</div></div>
+      <div class="field-row"><div class="field-label">Was employee hospitalized?</div><div class="field-value">{{ inc.medical_treatment === 'hospitalized' ? 'Yes' : 'No' }}</div></div>
+
+      <!-- Section C: Incident -->
+      <div class="section-head">C — Information about the case</div>
+      <div class="field-row"><div class="field-label">Case number</div><div class="field-value fw-bold">{{ inc.incident_id }}</div></div>
+      <div class="field-row"><div class="field-label">Date of injury/illness</div><div class="field-value">{{ inc.incident_date }}</div></div>
+      <div class="field-row"><div class="field-label">Time of event</div><div class="field-value">{{ inc.incident_time || '—' }}</div></div>
+      <div class="field-row"><div class="field-label">Employee began work</div><div class="field-value">&mdash;</div></div>
+      <div class="field-row"><div class="field-label">What was the employee doing?</div><div class="field-value">{{ inc.description }}</div></div>
+      <div class="field-row"><div class="field-label">What happened?</div><div class="field-value">{{ inc.description }}</div></div>
+      <div class="field-row"><div class="field-label">Injury/illness</div><div class="field-value">{{ inc.injury_type || '—' }}</div></div>
+      <div class="field-row"><div class="field-label">Object or substance involved</div><div class="field-value">&mdash;</div></div>
+      <div class="field-row"><div class="field-label">Date of death (if fatal)</div><div class="field-value">{{ inc.injury_type === 'Fatality' ? inc.incident_date : '—' }}</div></div>
+
+      <!-- Certification -->
+      <div class="section-head">D — Completed by</div>
+      <div class="field-row"><div class="field-label">Name of preparer</div><div class="field-value">{{ inc.reporter_first }} {{ inc.reporter_last }}</div></div>
+      <div class="field-row"><div class="field-label">Title</div><div class="field-value">{{ inc.reporter_title || inc.reporter_dept }}</div></div>
+      <div class="field-row"><div class="field-label">Phone</div><div class="field-value">{{ inc.reporter_phone }}</div></div>
+      <div class="field-row"><div class="field-label">Date</div><div class="field-value">{{ inc.submitted_at | date:'mediumDate' }}</div></div>
+    </div>
+  }
+</div>

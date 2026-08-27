@@ -1,0 +1,154 @@
+<nav class="navbar navbar-pcm px-3">
+  <a class="navbar-brand" routerLink="/dashboard"><i class="bi bi-shield-check me-2"></i>PCMHub</a>
+  <a routerLink="/dashboard" class="btn btn-outline-light btn-sm ms-auto"><i class="bi bi-arrow-left me-1"></i>Dashboard</a>
+</nav>
+
+<div class="container py-4" style="max-width:960px">
+  @if (loading()) {
+    <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+  } @else if (error()) {
+    <div class="alert alert-danger">{{ error() }}</div>
+  } @else if (!inc) {
+    <div class="alert alert-warning">Incident not found.</div>
+  } @else {
+    <div class="card mb-4">
+      <div class="inc-header d-flex align-items-center flex-wrap gap-3">
+        <div>
+          <div class="fw-bold fs-5">{{ inc.incident_id }}</div>
+          <div class="small opacity-75">{{ inc.incident_site }} · {{ inc.incident_date }}</div>
+        </div>
+        <div class="ms-auto d-flex align-items-center gap-2 flex-wrap">
+          <span class="badge bg-{{ urgencyClass(inc.urgency) }} text-uppercase">{{ inc.urgency }}</span>
+          <span class="badge bg-{{ statusClass(inc.status) }}">{{ inc.status }}</span>
+          @if (inc.osha_recordable) { <span class="badge bg-danger">OSHA Recordable</span> }
+        </div>
+      </div>
+
+      <div class="card-header p-0">
+        <ul class="nav nav-tabs border-0">
+          @for (tab of ['overview','injury','investigation','osha','notes']; track tab) {
+            <li class="nav-item">
+              <button class="nav-link" [class.active]="activeTab() === tab" (click)="activeTab.set($any(tab))">{{ tab | titlecase }}</button>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <div class="card-body">
+
+        @if (activeTab() === 'overview') {
+          <div class="row g-4">
+            <div class="col-md-6">
+              <p class="detail-label">Reporter</p>
+              <div>{{ inc.reporter_first }} {{ inc.reporter_last }}</div>
+              <div class="text-muted small">{{ inc.reporter_email }}</div>
+              <div class="text-muted small">{{ inc.reporter_dept }} · {{ inc.reporter_site }}</div>
+            </div>
+            <div class="col-md-6">
+              <p class="detail-label">Incident</p>
+              <div>{{ inc.incident_type | titlecase }}</div>
+              <div class="text-muted small">{{ inc.incident_date }} {{ inc.incident_time }}</div>
+              <div class="text-muted small">{{ inc.incident_site }} {{ inc.incident_area ? '· ' + inc.incident_area : '' }}</div>
+            </div>
+            <div class="col-12">
+              <p class="detail-label">Description</p>
+              <p class="small">{{ inc.description }}</p>
+              @if (inc.immediate_actions) {
+                <p class="detail-label mt-2">Immediate Actions</p>
+                <p class="small">{{ inc.immediate_actions }}</p>
+              }
+            </div>
+            @if (auth.isManager()) {
+              <div class="col-12">
+                <p class="detail-label">Update Status</p>
+                <div class="d-flex gap-2">
+                  <select class="form-select form-select-sm" style="max-width:220px" [(ngModel)]="editStatus">
+                    @for (s of statuses; track s) { <option [value]="s">{{ s }}</option> }
+                  </select>
+                  <button class="btn btn-primary btn-sm" (click)="saveStatus()" [disabled]="saving()">
+                    @if (saving()) { <span class="spinner-border spinner-border-sm me-1"></span> }Save
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        @if (activeTab() === 'injury') {
+          <div class="row g-3 small">
+            <div class="col-md-4"><p class="detail-label">Involved</p>{{ inc.involved_first }} {{ inc.involved_last }}</div>
+            <div class="col-md-4"><p class="detail-label">Job Title</p>{{ inc.job_title }}</div>
+            <div class="col-md-4"><p class="detail-label">Department</p>{{ inc.department }}</div>
+            <div class="col-md-4"><p class="detail-label">Injury Type</p>{{ inc.injury_type || '—' }}</div>
+            <div class="col-md-4"><p class="detail-label">Body Part</p>{{ inc.body_part || '—' }}</div>
+            <div class="col-md-4"><p class="detail-label">Medical Treatment</p>{{ inc.medical_treatment || '—' }}</div>
+            <div class="col-md-4"><p class="detail-label">Days Away</p>{{ inc.days_away ?? 0 }}</div>
+            <div class="col-md-4"><p class="detail-label">Days Restricted</p>{{ inc.days_restricted ?? 0 }}</div>
+            <div class="col-md-4"><p class="detail-label">Work-related</p>{{ inc.work_related ? 'Yes' : 'No' }}</div>
+          </div>
+        }
+
+        @if (activeTab() === 'investigation') {
+          <div class="row g-3 small">
+            <div class="col-md-6"><p class="detail-label">Root Cause Category</p>{{ inc.root_cause_category || '—' }}</div>
+            <div class="col-md-6"><p class="detail-label">RCA Method</p>{{ inc.rca_method || '—' }}</div>
+            @if (inc.five_whys?.length) {
+              <div class="col-12">
+                <p class="detail-label">5-Why Analysis</p>
+                <ol class="ps-3 mb-0">
+                  @for (w of inc.five_whys; track $index) { <li>{{ w }}</li> }
+                </ol>
+              </div>
+            }
+            @if (inc.witnesses?.length) {
+              <div class="col-12">
+                <p class="detail-label">Witnesses</p>
+                <ul class="ps-3 mb-0">
+                  @for (w of inc.witnesses; track $index) { <li>{{ w }}</li> }
+                </ul>
+              </div>
+            }
+            @if (inc.corrective_actions?.length) {
+              <div class="col-12">
+                <p class="detail-label">Corrective Actions</p>
+                <ul class="ps-3 mb-0">
+                  @for (a of inc.corrective_actions; track $index) { <li>{{ a }}</li> }
+                </ul>
+              </div>
+            }
+          </div>
+        }
+
+        @if (activeTab() === 'osha') {
+          <div class="row g-3 small">
+            <div class="col-12">
+              <div class="alert" [class.alert-warning]="inc.osha_recordable" [class.alert-success]="!inc.osha_recordable">
+                <i class="bi me-2" [class.bi-exclamation-triangle]="inc.osha_recordable" [class.bi-check-circle]="!inc.osha_recordable"></i>
+                OSHA Recordable: <strong>{{ inc.osha_recordable ? 'YES' : 'No' }}</strong>
+              </div>
+            </div>
+            <div class="col-md-6"><p class="detail-label">Supervisor</p>{{ inc.supervisor_name || '—' }}</div>
+            <div class="col-md-6"><p class="detail-label">Supervisor Email</p>{{ inc.supervisor_email || '—' }}</div>
+          </div>
+        }
+
+        @if (activeTab() === 'notes') {
+          @for (n of notes(); track n.id) {
+            <div class="border-start border-primary ps-3 mb-3">
+              <div class="small fw-semibold">{{ n.created_by }}</div>
+              <div class="small text-muted">{{ n.created_at | date:'medium' }}</div>
+              <div class="small mt-1">{{ n.note }}</div>
+            </div>
+          } @empty {
+            <p class="text-muted small">No notes yet.</p>
+          }
+          <div class="d-flex gap-2 mt-3">
+            <textarea class="form-control form-control-sm flex-grow-1" [(ngModel)]="newNote" rows="2" placeholder="Add a note…"></textarea>
+            <button class="btn btn-primary btn-sm align-self-end" (click)="addNote()" [disabled]="!newNote.trim()">Post</button>
+          </div>
+        }
+
+      </div>
+    </div>
+  }
+</div>

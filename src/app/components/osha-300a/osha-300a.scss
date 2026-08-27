@@ -1,0 +1,10 @@
+.osha-page { max-width: 1100px; margin: 0 auto; }
+.osha-300a-form { border: 2px solid #000; font-size: .8rem; }
+.osha-300a-form th { background: #ccc; border: 1px solid #000; padding: .2rem .4rem; }
+.osha-300a-form td { border: 1px solid #000; padding: .2rem .4rem; }
+.osha-header { background: #666; color: #fff; text-align: center; padding: .5rem; }
+.summary-box { border: 1px solid #000; padding: .5rem; }
+@media print {
+  nav, .no-print { display: none !important; }
+  .osha-300a-form { font-size: .75rem; }
+}

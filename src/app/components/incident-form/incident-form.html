@@ -1,0 +1,233 @@
+<nav class="navbar navbar-pcm px-3">
+  <a class="navbar-brand" routerLink="/dashboard"><i class="bi bi-shield-check me-2"></i>PCMHub</a>
+  <button class="btn btn-outline-light btn-sm" (click)="auth.logout()"><i class="bi bi-box-arrow-right"></i></button>
+</nav>
+
+<div class="container py-4 ehs-form">
+  @if (successId()) {
+    <div class="alert alert-success text-center py-4">
+      <i class="bi bi-check-circle-fill fs-2 d-block mb-2"></i>
+      <strong>Incident {{ successId() }} submitted.</strong><br><small>Redirecting…</small>
+    </div>
+  } @else {
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <a routerLink="/dashboard" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+      <div>
+        <h4 class="mb-0 fw-bold">New EHS Incident Report</h4>
+        <small class="text-muted">Step {{ step() }} of {{ totalSteps }}</small>
+      </div>
+    </div>
+
+    <!-- Step pills -->
+    <div class="step-pill mb-4">
+      @for (s of steps; track $index; let i = $index) {
+        <div class="step" [class.active]="step() === i + 1" [class.completed]="step() > i + 1">
+          <span class="step-num">@if (step() > i + 1) { <i class="bi bi-check"></i> } @else { {{ i + 1 }} }</span>
+          <span class="d-none d-md-inline">{{ s }}</span>
+        </div>
+        @if (i < steps.length - 1) { <div class="step-connector"></div> }
+      }
+    </div>
+
+    @if (error()) { <div class="alert alert-danger py-2 mb-3">{{ error() }}</div> }
+
+    <div class="card p-4">
+
+      <!-- Step 1: Reporter -->
+      @if (step() === 1) {
+        <h5 class="fw-semibold mb-4">Reporter Information</h5>
+        <div class="row g-3">
+          <div class="col-md-6"><label class="form-label required">First Name</label><input class="form-control" [(ngModel)]="form.reporter_first"></div>
+          <div class="col-md-6"><label class="form-label required">Last Name</label><input class="form-control" [(ngModel)]="form.reporter_last"></div>
+          <div class="col-md-6"><label class="form-label">Email</label><input class="form-control" [(ngModel)]="form.reporter_email" type="email"></div>
+          <div class="col-md-6"><label class="form-label">Phone</label><input class="form-control" [(ngModel)]="form.reporter_phone" type="tel"></div>
+          <div class="col-md-6">
+            <label class="form-label">Site</label>
+            <select class="form-select" [(ngModel)]="form.reporter_site">
+              <option value="">Select…</option>
+              @for (s of sites; track s) { <option [value]="s">{{ s }}</option> }
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Department</label>
+            <select class="form-select" [(ngModel)]="form.reporter_dept">
+              <option value="">Select…</option>
+              @for (d of departments; track d) { <option [value]="d">{{ d }}</option> }
+            </select>
+          </div>
+        </div>
+      }
+
+      <!-- Step 2: Incident -->
+      @if (step() === 2) {
+        <h5 class="fw-semibold mb-4">Incident Details</h5>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label required">Type</label>
+            <select class="form-select" [(ngModel)]="form.incident_type">
+              @for (t of incidentTypes; track t.value) { <option [value]="t.value">{{ t.label }}</option> }
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Urgency</label>
+            <select class="form-select" [(ngModel)]="form.urgency">
+              @for (u of urgencies; track u.value) { <option [value]="u.value">{{ u.label }}</option> }
+            </select>
+          </div>
+          <div class="col-md-4"><label class="form-label required">Date</label><input class="form-control" type="date" [(ngModel)]="form.incident_date"></div>
+          <div class="col-md-3"><label class="form-label">Time</label><input class="form-control" type="time" [(ngModel)]="form.incident_time"></div>
+          <div class="col-md-5">
+            <label class="form-label">Site</label>
+            <select class="form-select" [(ngModel)]="form.incident_site">
+              <option value="">Select…</option>
+              @for (s of sites; track s) { <option [value]="s">{{ s }}</option> }
+            </select>
+          </div>
+          <div class="col-md-6"><label class="form-label">Area / Location</label><input class="form-control" [(ngModel)]="form.incident_area" placeholder="Building, room, zone…"></div>
+          <div class="col-12"><label class="form-label required">Description</label><textarea class="form-control" [(ngModel)]="form.description" rows="4" placeholder="Describe what happened…"></textarea></div>
+          <div class="col-12"><label class="form-label">Immediate Actions Taken</label><textarea class="form-control" [(ngModel)]="form.immediate_actions" rows="2"></textarea></div>
+        </div>
+      }
+
+      <!-- Step 3: Involved Person -->
+      @if (step() === 3) {
+        <h5 class="fw-semibold mb-4">Involved Person</h5>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Person Type</label>
+            <select class="form-select" [(ngModel)]="form.person_type">
+              <option value="employee">Employee</option>
+              <option value="contractor">Contractor</option>
+              <option value="visitor">Visitor</option>
+              <option value="customer">Customer</option>
+            </select>
+          </div>
+          @if (form.person_type === 'employee' && employees.length) {
+            <div class="col-md-8">
+              <label class="form-label">Employee Lookup</label>
+              <select class="form-select" (change)="onEmployeeSelect($any($event.target).value)">
+                <option value="">Search by name…</option>
+                @for (emp of employees; track emp.id) {
+                  <option [value]="emp.employee_id ?? emp.id">{{ emp.last_name }}, {{ emp.first_name }} ({{ emp.department }})</option>
+                }
+              </select>
+            </div>
+          }
+          <div class="col-md-6"><label class="form-label">First Name</label><input class="form-control" [(ngModel)]="form.involved_first"></div>
+          <div class="col-md-6"><label class="form-label">Last Name</label><input class="form-control" [(ngModel)]="form.involved_last"></div>
+          <div class="col-md-6"><label class="form-label">Job Title</label><input class="form-control" [(ngModel)]="form.job_title"></div>
+          <div class="col-md-6">
+            <label class="form-label">Department</label>
+            <select class="form-select" [(ngModel)]="form.department">
+              <option value="">Select…</option>
+              @for (d of departments; track d) { <option [value]="d">{{ d }}</option> }
+            </select>
+          </div>
+          <div class="col-md-6"><label class="form-label">Supervisor Name</label><input class="form-control" [(ngModel)]="form.supervisor_name"></div>
+          <div class="col-md-6"><label class="form-label">Supervisor Email</label><input class="form-control" [(ngModel)]="form.supervisor_email" type="email"></div>
+        </div>
+      }
+
+      <!-- Step 4: Injury / Medical -->
+      @if (step() === 4) {
+        <h5 class="fw-semibold mb-4">Injury &amp; Medical Details</h5>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Injury Type</label>
+            <select class="form-select" [(ngModel)]="form.injury_type">
+              <option value="">N/A</option>
+              @for (t of injuryTypes; track t) { <option [value]="t">{{ t }}</option> }
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Body Part</label>
+            <select class="form-select" [(ngModel)]="form.body_part">
+              <option value="">N/A</option>
+              @for (b of bodyParts; track b) { <option [value]="b">{{ b }}</option> }
+            </select>
+          </div>
+          <div class="col-md-4"><label class="form-label">Days Away from Work</label><input class="form-control" type="number" [(ngModel)]="form.days_away" min="0"></div>
+          <div class="col-md-4"><label class="form-label">Days Job Transfer/Restriction</label><input class="form-control" type="number" [(ngModel)]="form.days_restricted" min="0"></div>
+          <div class="col-md-4">
+            <label class="form-label">Medical Treatment</label>
+            <select class="form-select" [(ngModel)]="form.medical_treatment" (change)="computeOsha()">
+              <option value="">None</option>
+              <option value="first_aid_only">First Aid Only</option>
+              <option value="medical_attention">Medical Attention</option>
+              <option value="emergency_room">Emergency Room</option>
+              <option value="hospitalized">Hospitalized</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="workRel" [(ngModel)]="form.work_related"><label class="form-check-label" for="workRel">Work-related</label></div>
+          </div>
+          <div class="col-12">
+            <div class="alert" [class.alert-warning]="form.osha_recordable" [class.alert-success]="!form.osha_recordable">
+              <i class="bi me-2" [class.bi-exclamation-triangle]="form.osha_recordable" [class.bi-check-circle]="!form.osha_recordable"></i>
+              OSHA Recordable: <strong>{{ form.osha_recordable ? 'YES' : 'No' }}</strong>
+              <small class="ms-2 text-muted">(auto-computed based on treatment and type)</small>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Step 5: Investigation -->
+      @if (step() === 5) {
+        <h5 class="fw-semibold mb-4">Investigation &amp; Root Cause</h5>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Root Cause Category</label>
+            <select class="form-select" [(ngModel)]="form.root_cause_category">
+              <option value="">Select…</option>
+              @for (c of rootCauseCategories; track c) { <option [value]="c">{{ c }}</option> }
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">RCA Method</label>
+            <select class="form-select" [(ngModel)]="form.rca_method">
+              <option value="">Select…</option>
+              @for (m of rcaMethods; track m) { <option [value]="m">{{ m }}</option> }
+            </select>
+          </div>
+          <div class="col-12"><label class="form-label">5-Why Analysis <span class="text-muted small">(one per line)</span></label><textarea class="form-control" [(ngModel)]="form.five_whys_text" rows="5" placeholder="Why 1:&#10;Why 2:&#10;Why 3:&#10;Why 4:&#10;Why 5:"></textarea></div>
+          <div class="col-12"><label class="form-label">Witnesses <span class="text-muted small">(one per line)</span></label><textarea class="form-control" [(ngModel)]="form.witnesses_text" rows="3"></textarea></div>
+          <div class="col-12"><label class="form-label">Corrective Actions <span class="text-muted small">(one per line)</span></label><textarea class="form-control" [(ngModel)]="form.corrective_actions_text" rows="3"></textarea></div>
+          <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" id="trainDef" [(ngModel)]="form.training_deficiency"><label class="form-check-label" for="trainDef">Training deficiency identified</label></div></div>
+        </div>
+      }
+
+      <!-- Step 6: Review -->
+      @if (step() === 6) {
+        <h5 class="fw-semibold mb-4">Review &amp; Submit</h5>
+        <div class="row g-3 small">
+          <div class="col-md-6">
+            <div class="card p-3 bg-light"><div class="fw-semibold mb-2">Reporter</div><div>{{ form.reporter_first }} {{ form.reporter_last }}</div><div>{{ form.reporter_email }}</div><div>{{ form.reporter_site }}</div></div>
+          </div>
+          <div class="col-md-6">
+            <div class="card p-3 bg-light"><div class="fw-semibold mb-2">Incident</div><div>Type: {{ form.incident_type }}</div><div>Urgency: {{ form.urgency }}</div><div>Date: {{ form.incident_date }}</div><div>Site: {{ form.incident_site }}</div></div>
+          </div>
+          <div class="col-12">
+            <div class="card p-3 bg-light"><div class="fw-semibold mb-2">Description</div><div>{{ form.description }}</div></div>
+          </div>
+          <div class="col-12">
+            <div class="alert" [class.alert-warning]="form.osha_recordable" [class.alert-info]="!form.osha_recordable">
+              OSHA Recordable: <strong>{{ form.osha_recordable ? 'YES' : 'No' }}</strong>
+            </div>
+          </div>
+        </div>
+      }
+
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+      <button class="btn btn-outline-secondary" (click)="back()" [disabled]="step() === 1 || submitting()"><i class="bi bi-arrow-left me-1"></i>Back</button>
+      @if (step() < totalSteps) {
+        <button class="btn btn-primary" (click)="next()" [disabled]="!canAdvance()">Next <i class="bi bi-arrow-right ms-1"></i></button>
+      } @else {
+        <button class="btn btn-success px-4" (click)="submit()" [disabled]="submitting()">
+          @if (submitting()) { <span class="spinner-border spinner-border-sm me-2"></span>Submitting… } @else { <i class="bi bi-send me-2"></i>Submit Report }
+        </button>
+      }
+    </div>
+  }
+</div>

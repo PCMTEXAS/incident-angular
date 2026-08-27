@@ -1,0 +1,244 @@
+<nav class="navbar navbar-pcm px-3">
+  <a class="navbar-brand" routerLink="/dashboard"><i class="bi bi-shield-check me-2"></i>PCMHub</a>
+  <a routerLink="/dashboard" class="btn btn-outline-light btn-sm ms-auto me-2">
+    <i class="bi bi-arrow-left me-1"></i>Dashboard
+  </a>
+</nav>
+
+<div class="container-fluid py-4 px-3 px-md-4">
+  @if (loading()) {
+    <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+  } @else if (error()) {
+    <div class="alert alert-danger">{{ error() }}</div>
+  } @else if (!inc) {
+    <div class="alert alert-warning">Incident not found.</div>
+  } @else {
+
+    <!-- Stage header -->
+    <div class="card mb-4">
+      <div class="stage-header d-flex align-items-center flex-wrap gap-3">
+        <div>
+          <div class="fw-bold fs-5">{{ inc.incident_id }}</div>
+          <div class="small opacity-75">{{ inc.cw_site_name }} · {{ inc.occurred_at | date:'medium' }}</div>
+        </div>
+        <div class="ms-auto d-flex align-items-center gap-2 flex-wrap">
+          <span class="stage-badge {{ stageClass(inc.workflow_stage) }}">{{ stageLabel(inc.workflow_stage) }}</span>
+          @if (isOverdue) {
+            <span class="badge bg-danger"><i class="bi bi-clock me-1"></i>Overdue</span>
+          } @else if (inc.sla_deadline && inc.workflow_stage !== 'closed') {
+            <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>{{ slaHoursRemaining }}h remaining</span>
+          }
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="card-header p-0">
+        <ul class="nav nav-tabs border-0">
+          @for (tab of ['overview','evidence','actions','notes','audit','workflow']; track tab) {
+            <li class="nav-item">
+              <button class="nav-link" [class.active]="activeTab() === tab" (click)="activeTab.set($any(tab))">
+                {{ tab | titlecase }}
+              </button>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <div class="card-body">
+
+        <!-- Overview -->
+        @if (activeTab() === 'overview') {
+          <div class="row g-4">
+            <div class="col-md-6">
+              <h6 class="text-muted small fw-semibold text-uppercase mb-3">Customer</h6>
+              <dl class="row small mb-0">
+                <dt class="col-5">Name</dt><dd class="col-7">{{ inc.customer_name }}</dd>
+                <dt class="col-5">Phone</dt><dd class="col-7">{{ inc.customer_phone }}</dd>
+                <dt class="col-5">Email</dt><dd class="col-7">{{ inc.customer_email }}</dd>
+                <dt class="col-5">In Vehicle</dt><dd class="col-7">{{ inc.customer_in_vehicle ? 'Yes' : 'No' }}</dd>
+              </dl>
+            </div>
+            <div class="col-md-6">
+              <h6 class="text-muted small fw-semibold text-uppercase mb-3">Vehicle</h6>
+              <dl class="row small mb-0">
+                <dt class="col-5">Vehicle</dt><dd class="col-7">{{ inc.vehicle_year }} {{ inc.vehicle_make }} {{ inc.vehicle_model }}</dd>
+                <dt class="col-5">Color</dt><dd class="col-7">{{ inc.vehicle_color }}</dd>
+                <dt class="col-5">License</dt><dd class="col-7">{{ inc.vehicle_license_plate }} {{ inc.vehicle_plate_state }}</dd>
+                <dt class="col-5">VIN</dt><dd class="col-7 font-monospace small">{{ inc.vehicle_vin }}</dd>
+                <dt class="col-5">Drivable</dt><dd class="col-7">{{ inc.vehicle_drivable ? 'Yes' : 'No' }}</dd>
+              </dl>
+            </div>
+            <div class="col-12">
+              <h6 class="text-muted small fw-semibold text-uppercase mb-2">Narratives</h6>
+              @if (inc.narrative_employee_observations) {
+                <div class="mb-2"><strong class="small">Employee:</strong><p class="small mb-0">{{ inc.narrative_employee_observations }}</p></div>
+              }
+              @if (inc.narrative_customer_statement) {
+                <div class="mb-2"><strong class="small">Customer:</strong><p class="small mb-0">{{ inc.narrative_customer_statement }}</p></div>
+              }
+            </div>
+            @if (inc.damage_assessment && (inc.damage_assessment | keyvalue).length) {
+              <div class="col-12">
+                <h6 class="text-muted small fw-semibold text-uppercase mb-2">Damage Zones</h6>
+                <div class="row g-2">
+                  @for (zone of inc.damage_assessment | keyvalue; track zone.key) {
+                    <div class="col-md-4">
+                      <div class="card p-2 small border-danger">
+                        <strong>{{ zone.value.label }}</strong>
+                        <div>Type: {{ zone.value.damageType }}</div>
+                        <div>Severity: <span class="badge bg-{{ zone.value.severity === 'severe' ? 'danger' : zone.value.severity === 'moderate' ? 'warning text-dark' : 'info text-dark' }}">{{ zone.value.severity }}</span></div>
+                        @if (zone.value.notes) { <div class="text-muted">{{ zone.value.notes }}</div> }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Evidence -->
+        @if (activeTab() === 'evidence') {
+          <div class="mb-4">
+            <div class="row g-3 mb-4">
+              @for (ev of evidence(); track ev.id) {
+                <div class="col-auto">
+                  <div class="position-relative">
+                    @if (ev.mime_type?.startsWith('image/')) {
+                      <img [src]="ev.file_url" [alt]="ev.file_name" class="evidence-thumb">
+                    } @else {
+                      <div class="evidence-thumb d-flex align-items-center justify-content-center bg-light border">
+                        <i class="bi bi-file-earmark fs-4 text-muted"></i>
+                      </div>
+                    }
+                    <div class="small text-center mt-1" style="max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ ev.category }}</div>
+                    @if (auth.isManager()) {
+                      <button class="btn btn-danger btn-sm position-absolute top-0 end-0" style="padding:.1rem .3rem;font-size:.65rem;" (click)="deleteEvidence(ev.id)">
+                        <i class="bi bi-x"></i>
+                      </button>
+                    }
+                  </div>
+                </div>
+              } @empty {
+                <div class="col-12 text-muted small">No evidence uploaded yet.</div>
+              }
+            </div>
+
+            @if (auth.isManager()) {
+              <div class="card p-3 bg-light">
+                <h6 class="small fw-semibold mb-3">Upload Evidence</h6>
+                <div class="row g-2 align-items-end">
+                  <div class="col-md-4">
+                    <label class="form-label small">Category</label>
+                    <select class="form-select form-select-sm" [(ngModel)]="uploadCategory">
+                      @for (c of evidenceCategories; track c) {
+                        <option [value]="c">{{ c | titlecase }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="col-md-5">
+                    <label class="form-label small">File</label>
+                    <input class="form-control form-control-sm" type="file" (change)="onFileSelect($event)" accept="image/*,video/*,.pdf">
+                  </div>
+                  <div class="col-auto">
+                    <button class="btn btn-primary btn-sm" (click)="uploadEvidence()" [disabled]="!uploadFile || uploading()">
+                      @if (uploading()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                      Upload
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Actions -->
+        @if (activeTab() === 'actions') {
+          @for (a of actions(); track a.id) {
+            <div class="card p-3 mb-2" [class.border-success]="a.status === 'completed'">
+              <div class="d-flex align-items-start gap-2">
+                <div class="flex-grow-1">
+                  <div class="fw-semibold small">{{ a.description }}</div>
+                  <div class="text-muted small">Owner: {{ a.owner }} · Due: {{ a.due_date }}</div>
+                </div>
+                <span class="badge" [class.bg-success]="a.status === 'completed'" [class.bg-warning]="a.status === 'in_progress'" [class.bg-secondary]="a.status === 'open'">{{ a.status }}</span>
+                @if (a.status !== 'completed' && auth.isManager()) {
+                  <button class="btn btn-sm btn-outline-success" (click)="completeAction(a)">
+                    <i class="bi bi-check"></i>
+                  </button>
+                }
+              </div>
+            </div>
+          } @empty {
+            <p class="text-muted small">No corrective actions yet.</p>
+          }
+
+          @if (auth.isManager()) {
+            <div class="card p-3 bg-light mt-3">
+              <h6 class="small fw-semibold mb-3">Add Corrective Action</h6>
+              <div class="row g-2">
+                <div class="col-12"><input class="form-control form-control-sm" [(ngModel)]="newAction.description" placeholder="Description *"></div>
+                <div class="col-md-6"><input class="form-control form-control-sm" [(ngModel)]="newAction.owner" placeholder="Owner"></div>
+                <div class="col-md-4"><input class="form-control form-control-sm" type="date" [(ngModel)]="newAction.due_date"></div>
+                <div class="col-auto"><button class="btn btn-primary btn-sm" (click)="addAction()" [disabled]="!newAction.description">Add</button></div>
+              </div>
+            </div>
+          }
+        }
+
+        <!-- Notes -->
+        @if (activeTab() === 'notes') {
+          @for (n of notes(); track n.id) {
+            <div class="timeline-entry mb-3">
+              <div class="small fw-semibold">{{ n.created_by }}</div>
+              <div class="small text-muted mb-1">{{ n.created_at | date:'medium' }}</div>
+              <div class="small">{{ n.note }}</div>
+            </div>
+          } @empty {
+            <p class="text-muted small">No notes yet.</p>
+          }
+          <div class="d-flex gap-2 mt-3">
+            <textarea class="form-control form-control-sm flex-grow-1" [(ngModel)]="newNote" rows="2" placeholder="Add a note…"></textarea>
+            <button class="btn btn-primary btn-sm align-self-end" (click)="addNote()" [disabled]="!newNote.trim()">Post</button>
+          </div>
+        }
+
+        <!-- Audit Log -->
+        @if (activeTab() === 'audit') {
+          @for (entry of auditLog(); track entry.id) {
+            <div class="timeline-entry mb-3">
+              <div class="small fw-semibold">{{ entry.action }}</div>
+              <div class="small text-muted">{{ entry.user_id }} · {{ entry.created_at | date:'medium' }}</div>
+            </div>
+          } @empty {
+            <p class="text-muted small">No audit entries.</p>
+          }
+        }
+
+        <!-- Workflow -->
+        @if (activeTab() === 'workflow') {
+          <div class="mb-4">
+            <h6 class="fw-semibold mb-3">Current Stage</h6>
+            <span class="stage-badge {{ stageClass(inc.workflow_stage) }} fs-6 mb-3 d-inline-block">{{ stageLabel(inc.workflow_stage) }}</span>
+
+            @if (allowedTransitions.length && auth.isManager()) {
+              <h6 class="fw-semibold mb-2 mt-4">Advance Stage</h6>
+              <div class="d-flex flex-wrap gap-2">
+                @for (to of allowedTransitions; track to) {
+                  <button class="btn btn-outline-primary" (click)="transition(to)">
+                    <i class="bi bi-arrow-right me-1"></i>{{ stageLabel(to) }}
+                  </button>
+                }
+              </div>
+            } @else if (!allowedTransitions.length) {
+              <div class="alert alert-success mt-3 py-2 small">
+                <i class="bi bi-check-circle me-2"></i>This incident is closed.
+              </div>
+            }
+          </div>
+        }
+
+      </div><!-- /card-body -->
+    </div><!-- /card -->
+  }
+</div>

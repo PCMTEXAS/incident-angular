@@ -1,0 +1,59 @@
+<div class="diagram-container">
+  <!-- View tabs -->
+  <div class="btn-group mb-3 w-100" role="group">
+    @for (v of views; track v) {
+      <button type="button" class="btn btn-sm" [class.btn-primary]="activeView() === v" [class.btn-outline-secondary]="activeView() !== v" (click)="setView(v)">
+        <i class="bi me-1" [class.bi-car-front]="v === 'front'" [class.bi-car-rear]="v === 'rear'" [class.bi-sign-turn-left]="v === 'driver'" [class.bi-sign-turn-right]="v === 'passenger'"></i>
+        {{ v | titlecase }}
+      </button>
+    }
+  </div>
+
+  <!-- Zone grid -->
+  <div class="zone-grid mb-3">
+    @for (zone of currentZones; track zone.id) {
+      <button type="button" class="zone-btn" [class.selected]="zone.selected" [class.readonly]="readonly" (click)="toggleZone(zone)">
+        <i class="bi" [class.bi-check-circle-fill]="zone.selected" [class.bi-circle]="!zone.selected"></i>
+        {{ zone.label }}
+        @if (zone.selected && zone.severity) {
+          <span class="badge badge-sev ms-1 bg-{{ zone.severity === 'severe' ? 'danger' : zone.severity === 'moderate' ? 'warning text-dark' : 'info text-dark' }}">{{ zone.severity }}</span>
+        }
+      </button>
+    }
+  </div>
+
+  <!-- Selected zone detail -->
+  @if (selectedZone() && !readonly) {
+    <div class="card border-primary p-3 mt-2">
+      <h6 class="fw-semibold mb-3">{{ selectedZone()!.label }} — Details</h6>
+      <div class="row g-2">
+        <div class="col-md-6">
+          <label class="form-label small">Damage Type</label>
+          <select class="form-select form-select-sm" [(ngModel)]="selectedZone()!.damageType" (change)="emit()">
+            <option value="">Select…</option>
+            @for (d of damageTypes; track d) {
+              <option [value]="d">{{ d }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small">Severity</label>
+          <select class="form-select form-select-sm" [(ngModel)]="selectedZone()!.severity" (change)="emit()">
+            <option value="">Select…</option>
+            <option value="minor">Minor</option>
+            <option value="moderate">Moderate</option>
+            <option value="severe">Severe</option>
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="form-label small">Notes</label>
+          <input class="form-control form-control-sm" [(ngModel)]="selectedZone()!.notes" (blur)="emit()" placeholder="Additional details…">
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (selectedCount > 0) {
+    <div class="mt-2 text-muted small"><i class="bi bi-info-circle me-1"></i>{{ selectedCount }} zone(s) marked across all views.</div>
+  }
+</div>

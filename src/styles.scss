@@ -1,0 +1,146 @@
+// PCMHub brand
+$dc-blue: #0057A8;
+$dc-blue-dark: #004080;
+$dc-blue-light: #e8f0f9;
+
+// Bootstrap overrides
+$primary: $dc-blue;
+$link-color: $dc-blue;
+
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins';
+
+// Global
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #f4f6f9;
+  color: #212529;
+}
+
+// Navbar
+.navbar-pcm {
+  background: $dc-blue !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  .navbar-brand { color: #fff !important; font-weight: 700; font-size: 1.25rem; }
+  .nav-link { color: rgba(255,255,255,.85) !important; }
+  .nav-link:hover, .nav-link.active { color: #fff !important; }
+}
+
+// Cards
+.card { border: none; border-radius: .75rem; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.card-header { background: #fff; border-bottom: 1px solid #e9ecef; border-radius: .75rem .75rem 0 0 !important; }
+
+// Step pills
+.step-pill {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+
+  .step {
+    display: flex;
+    align-items: center;
+    gap: .375rem;
+    padding: .375rem .875rem;
+    border-radius: 999px;
+    font-size: .8125rem;
+    font-weight: 600;
+    border: 2px solid #dee2e6;
+    color: #6c757d;
+    background: #fff;
+    cursor: default;
+    transition: all .2s;
+
+    .step-num {
+      width: 1.375rem;
+      height: 1.375rem;
+      border-radius: 50%;
+      background: #dee2e6;
+      color: #6c757d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .6875rem;
+      font-weight: 700;
+    }
+
+    &.active {
+      border-color: $dc-blue;
+      color: $dc-blue;
+      background: $dc-blue-light;
+      .step-num { background: $dc-blue; color: #fff; }
+    }
+
+    &.completed {
+      border-color: #198754;
+      color: #198754;
+      background: #d1e7dd;
+      .step-num { background: #198754; color: #fff; }
+    }
+  }
+
+  .step-connector {
+    flex: 1;
+    height: 2px;
+    background: #dee2e6;
+    min-width: 1rem;
+    max-width: 2.5rem;
+  }
+}
+
+// Workflow stage badge
+.stage-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .375rem;
+  padding: .25rem .75rem;
+  border-radius: 999px;
+  font-size: .75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+
+  &.draft         { background: #f8f9fa; color: #6c757d; border: 1px solid #dee2e6; }
+  &.submitted     { background: #cff4fc; color: #055160; }
+  &.under_review  { background: #fff3cd; color: #664d03; }
+  &.evidence_pending { background: #fde8d8; color: #842029; }
+  &.claims_review    { background: #e0cffc; color: #432874; }
+  &.root_cause_analysis { background: #f8d7da; color: #842029; }
+  &.corrective_action_open { background: #fde8d8; color: #664d03; }
+  &.ready_for_closure { background: #d1e7dd; color: #0f5132; }
+  &.closed        { background: #d1e7dd; color: #0f5132; }
+}
+
+// SLA indicators
+.sla-ok    { color: #198754; }
+.sla-warn  { color: #fd7e14; }
+.sla-over  { color: #dc3545; }
+
+// Tables
+.table-hover tbody tr:hover { background: $dc-blue-light; cursor: pointer; }
+
+// Buttons
+.btn-primary { background: $dc-blue; border-color: $dc-blue; }
+.btn-primary:hover { background: $dc-blue-dark; border-color: $dc-blue-dark; }
+
+// Form
+.form-label { font-weight: 500; margin-bottom: .25rem; }
+.required::after { content: ' *'; color: #dc3545; }
+
+// Utilities
+.text-blue { color: $dc-blue !important; }
+.bg-blue    { background: $dc-blue !important; }
+.bg-blue-light { background: $dc-blue-light !important; }
+
+// Scrollable table wrapper
+.table-wrapper { overflow-x: auto; }
+
+// Print
+@media print {
+  .no-print, .navbar-pcm, .sidebar { display: none !important; }
+  body { background: #fff; }
+}

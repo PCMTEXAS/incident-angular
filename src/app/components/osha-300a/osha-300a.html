@@ -1,0 +1,100 @@
+<nav class="navbar navbar-pcm px-3 no-print">
+  <a class="navbar-brand" routerLink="/dashboard"><i class="bi bi-shield-check me-2"></i>PCMHub</a>
+  <a routerLink="/dashboard" class="btn btn-outline-light btn-sm ms-auto me-2"><i class="bi bi-arrow-left me-1"></i>Dashboard</a>
+</nav>
+
+<div class="container py-4 osha-page">
+  <div class="d-flex justify-content-between align-items-center mb-3 no-print flex-wrap gap-2">
+    <h4 class="fw-bold mb-0">OSHA 300A — Summary of Work-Related Injuries and Illnesses</h4>
+    <div class="d-flex gap-2">
+      <select class="form-select form-select-sm" style="width:100px" [(ngModel)]="year" (change)="loadData()">
+        @for (y of [2024,2025,2026]; track y) { <option [value]="y">{{ y }}</option> }
+      </select>
+      <select class="form-select form-select-sm" style="width:140px" [(ngModel)]="site" (change)="loadData()">
+        @for (s of sites; track s) { <option [value]="s">{{ s }}</option> }
+      </select>
+      <button class="btn btn-outline-secondary btn-sm" (click)="print()"><i class="bi bi-printer me-1"></i>Print</button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+  } @else {
+    <div class="osha-300a-form">
+      <div class="osha-header fw-bold fs-6">OSHA's Form 300A — Summary of Work-Related Injuries and Illnesses — Year {{ year }}</div>
+
+      <!-- Company info -->
+      <div class="row g-0 border-top border-dark">
+        <div class="col-md-4 p-2 border-end border-dark">
+          <div class="small fw-semibold">Establishment name</div>
+          <div>{{ company.name }}</div>
+          <div class="mt-1 small fw-semibold">Street</div>
+          <div>{{ company.address }}</div>
+          <div class="mt-1 small fw-semibold">City</div>
+          <div>{{ company.city }}, {{ company.state }} {{ company.zip }}</div>
+        </div>
+        <div class="col-md-4 p-2 border-end border-dark">
+          <div class="small fw-semibold">Industry description (e.g. car wash)</div>
+          <div>Car Wash / Auto Services</div>
+          <div class="mt-1 small fw-semibold">SIC or NAICS code</div>
+          <div>{{ company.naics }}</div>
+        </div>
+        <div class="col-md-4 p-2">
+          <div class="small fw-semibold">Annual average number of employees</div>
+          <div>{{ avgEmployees }}</div>
+          <div class="mt-1 small fw-semibold">Total hours worked by all employees last year</div>
+          <div>{{ totalHoursWorked | number }}</div>
+        </div>
+      </div>
+
+      <!-- Injury/illness summary counts -->
+      <table class="table table-bordered mb-0">
+        <thead>
+          <tr>
+            <th>Total deaths</th>
+            <th>Days away from work</th>
+            <th>Job transfer/restriction</th>
+            <th>Other recordable cases</th>
+            <th>Total recordable cases</th>
+            <th>Days away from work (total)</th>
+            <th>Days restriction/transfer (total)</th>
+            <th>Injuries</th>
+            <th>Skin disorders</th>
+            <th>Resp. conditions</th>
+            <th>Poisonings</th>
+            <th>Hearing loss</th>
+            <th>All other illnesses</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-center fw-bold">{{ deathCount }}</td>
+            <td class="text-center fw-bold">{{ daysAwayCount }}</td>
+            <td class="text-center fw-bold">{{ restrictedCount }}</td>
+            <td class="text-center fw-bold">{{ otherCount }}</td>
+            <td class="text-center fw-bold">{{ recordables.length }}</td>
+            <td class="text-center fw-bold">{{ totalDaysAway }}</td>
+            <td class="text-center fw-bold">{{ totalDaysRestricted }}</td>
+            <td class="text-center fw-bold">{{ injuryCount }}</td>
+            <td class="text-center">0</td><td class="text-center">0</td>
+            <td class="text-center">0</td><td class="text-center">0</td>
+            <td class="text-center fw-bold">{{ illnessCount }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Incidence rate -->
+      <div class="p-2 border-top border-dark">
+        <span class="small fw-semibold">Incidence Rate (per 100 full-time workers):</span> {{ incidentRate }}
+      </div>
+
+      <!-- Certification -->
+      <div class="row g-0 border-top border-dark p-2">
+        <div class="col-12 small fw-semibold mb-2">Certification — I certify that I have examined this document and that to the best of my knowledge the entries are true, accurate, and complete.</div>
+        <div class="col-md-4"><label class="form-label small">Company executive's name</label><input class="form-control form-control-sm" [(ngModel)]="certName" [class.no-print]="false"></div>
+        <div class="col-md-4 px-md-2"><label class="form-label small">Title</label><input class="form-control form-control-sm" [(ngModel)]="certTitle"></div>
+        <div class="col-md-4"><label class="form-label small">Date</label><input class="form-control form-control-sm" type="date" [(ngModel)]="certDate"></div>
+      </div>
+    </div>
+  }
+</div>

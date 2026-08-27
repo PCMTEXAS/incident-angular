@@ -1,0 +1,32 @@
+.stage-header {
+  background: linear-gradient(135deg, #0057A8, #003d7a);
+  color: #fff;
+  border-radius: .75rem .75rem 0 0;
+  padding: 1.25rem 1.5rem;
+}
+
+.evidence-thumb {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: .375rem;
+  border: 1px solid #dee2e6;
+}
+
+.timeline-entry {
+  border-left: 2px solid #dee2e6;
+  padding-left: 1rem;
+  margin-left: .5rem;
+  position: relative;
+
+  &::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #0057A8;
+    position: absolute;
+    left: -6px;
+    top: 4px;
+  }
+}

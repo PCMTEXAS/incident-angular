@@ -1,0 +1,6 @@
+.osha-301-form { max-width: 900px; margin: 0 auto; border: 2px solid #000; font-size: .82rem; }
+.section-head { background: #ccc; font-weight: 600; padding: .3rem .5rem; border-bottom: 1px solid #000; font-size: .75rem; text-transform: uppercase; }
+.field-row { display: grid; grid-template-columns: 200px 1fr; border-bottom: 1px solid #ccc; }
+.field-label { background: #f8f9fa; padding: .3rem .5rem; font-size: .75rem; border-right: 1px solid #ccc; color: #555; }
+.field-value { padding: .3rem .5rem; }
+@media print { nav, .no-print { display: none !important; } }

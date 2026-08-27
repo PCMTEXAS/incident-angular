@@ -1,0 +1,357 @@
+<nav class="navbar navbar-pcm px-3">
+  <a class="navbar-brand" routerLink="/dashboard"><i class="bi bi-shield-check me-2"></i>PCMHub</a>
+  <button class="btn btn-outline-light btn-sm" (click)="auth.logout()"><i class="bi bi-box-arrow-right"></i></button>
+</nav>
+
+<div class="container py-4 cw-form">
+  @if (successId()) {
+    <div class="alert alert-success text-center py-4">
+      <i class="bi bi-check-circle-fill fs-2 d-block mb-2"></i>
+      <strong>Incident {{ successId() }} submitted successfully.</strong><br>
+      <small>Redirecting to incident detail…</small>
+    </div>
+  } @else {
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <a routerLink="/dashboard" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+      <div>
+        <h4 class="mb-0 fw-bold">Car Wash Damage Report</h4>
+        <small class="text-muted">Step {{ step() }} of {{ totalSteps }}</small>
+      </div>
+    </div>
+
+    <!-- Step Pills -->
+    <div class="step-pill mb-4">
+      @for (s of steps; track $index; let i = $index) {
+        <div class="step" [class.active]="step() === i + 1" [class.completed]="step() > i + 1">
+          <span class="step-num">
+            @if (step() > i + 1) { <i class="bi bi-check"></i> } @else { {{ i + 1 }} }
+          </span>
+          <span class="d-none d-md-inline">{{ s }}</span>
+        </div>
+        @if (i < steps.length - 1) { <div class="step-connector"></div> }
+      }
+    </div>
+
+    @if (error()) {
+      <div class="alert alert-danger py-2 mb-3"><i class="bi bi-exclamation-circle me-2"></i>{{ error() }}</div>
+    }
+
+    <div class="card p-4">
+
+      <!-- Step 1: Reporter -->
+      @if (step() === 1) {
+        <h5 class="fw-semibold mb-4">Reporter Information</h5>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Name</label>
+            <input class="form-control" [value]="user?.name" disabled>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input class="form-control" [value]="user?.email" disabled>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Role</label>
+            <input class="form-control" [value]="user?.role" disabled>
+          </div>
+          <div class="col-12">
+            <div class="alert alert-info py-2 small">
+              <i class="bi bi-info-circle me-2"></i>Your account information is pre-filled. Click <strong>Next</strong> to continue.
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Step 2: Customer & Vehicle -->
+      @if (step() === 2) {
+        <h5 class="fw-semibold mb-4">Customer &amp; Vehicle Information</h5>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label required">Customer Name</label>
+            <input class="form-control" [(ngModel)]="form.customer_name" placeholder="Full name">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Phone</label>
+            <input class="form-control" [(ngModel)]="form.customer_phone" type="tel">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input class="form-control" [(ngModel)]="form.customer_email" type="email">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Preferred Contact</label>
+            <select class="form-select" [(ngModel)]="form.customer_preferred_contact">
+              <option value="phone">Phone</option>
+              <option value="email">Email</option>
+              <option value="text">Text</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="inVehicle" [(ngModel)]="form.customer_in_vehicle">
+              <label class="form-check-label" for="inVehicle">Customer was in the vehicle during incident</label>
+            </div>
+          </div>
+          <div class="col-12"><hr class="my-2"><h6 class="text-muted">Vehicle Details</h6></div>
+          <div class="col-md-3">
+            <label class="form-label required">Year</label>
+            <input class="form-control" [(ngModel)]="form.vehicle_year" placeholder="2023">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label required">Make</label>
+            <input class="form-control" [(ngModel)]="form.vehicle_make" placeholder="Toyota">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label required">Model</label>
+            <input class="form-control" [(ngModel)]="form.vehicle_model" placeholder="Camry">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Color</label>
+            <input class="form-control" [(ngModel)]="form.vehicle_color">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">License Plate</label>
+            <input class="form-control" [(ngModel)]="form.vehicle_license_plate">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">State</label>
+            <input class="form-control" [(ngModel)]="form.vehicle_plate_state" maxlength="2">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">VIN</label>
+            <input class="form-control" [(ngModel)]="form.vehicle_vin" maxlength="17">
+          </div>
+          <div class="col-md-6">
+            <div class="form-check mt-2">
+              <input class="form-check-input" type="checkbox" id="drivable" [(ngModel)]="form.vehicle_drivable">
+              <label class="form-check-label" for="drivable">Vehicle is drivable</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="tow" [(ngModel)]="form.vehicle_tow_required">
+              <label class="form-check-label" for="tow">Tow required</label>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Step 3: Service & Equipment -->
+      @if (step() === 3) {
+        <h5 class="fw-semibold mb-4">Service &amp; Equipment Details</h5>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label required">Site</label>
+            <select class="form-select" [(ngModel)]="form.cw_site_id" (change)="onSiteChange()">
+              <option value="">Select site…</option>
+              @for (site of sites(); track site.id) {
+                <option [value]="site.id">{{ site.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Equipment</label>
+            <select class="form-select" [(ngModel)]="form.equipment_id" (change)="onEquipmentChange()" [disabled]="!form.cw_site_id">
+              <option value="">Select equipment…</option>
+              @for (eq of equipment(); track eq.id) {
+                <option [value]="eq.id">{{ eq.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label required">Date &amp; Time of Incident</label>
+            <input class="form-control" type="datetime-local" [(ngModel)]="form.occurred_at">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Wash Package</label>
+            <select class="form-select" [(ngModel)]="form.wash_package">
+              <option value="">Select…</option>
+              @for (p of washPackages; track p) {
+                <option [value]="p">{{ p }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Wash Stage at Incident</label>
+            <select class="form-select" [(ngModel)]="form.wash_stage_at_incident">
+              <option value="">Select…</option>
+              @for (s of washStages; track s) {
+                <option [value]="s">{{ s }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Transaction Reference</label>
+            <input class="form-control" [(ngModel)]="form.transaction_ref" placeholder="POS receipt #">
+          </div>
+          <div class="col-12">
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="checkbox" id="eStop" [(ngModel)]="form.emergency_stop_activated">
+              <label class="form-check-label" for="eStop">Emergency stop activated</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="checkbox" id="laneOut" [(ngModel)]="form.lane_out_of_service">
+              <label class="form-check-label" for="laneOut">Lane taken out of service</label>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Step 4: Narrative -->
+      @if (step() === 4) {
+        <h5 class="fw-semibold mb-4">Incident Narrative</h5>
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label required">Employee Observations</label>
+            <textarea class="form-control" [(ngModel)]="form.narrative_employee_observations" rows="4" placeholder="Describe what you observed…"></textarea>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Customer Statement</label>
+            <textarea class="form-control" [(ngModel)]="form.narrative_customer_statement" rows="3" placeholder="Customer's account of what happened…"></textarea>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Witness Statement</label>
+            <textarea class="form-control" [(ngModel)]="form.narrative_witness_statement" rows="3" placeholder="Any witness accounts…"></textarea>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Timeline of Events</label>
+            <textarea class="form-control" [(ngModel)]="form.narrative_timeline_of_events" rows="3" placeholder="Chronological sequence of events…"></textarea>
+          </div>
+        </div>
+      }
+
+      <!-- Step 5: Evidence -->
+      @if (step() === 5) {
+        <h5 class="fw-semibold mb-4">Evidence Documentation</h5>
+        <div class="alert alert-info small">
+          <i class="bi bi-camera me-2"></i>Upload photos in each category after submission via the Incident Detail view. Mark evidence preservation status below.
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="cctv" [(ngModel)]="form.cctv_preserved"><label class="form-check-label" for="cctv">CCTV footage preserved</label></div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="eqlog" [(ngModel)]="form.equipment_logs_preserved"><label class="form-check-label" for="eqlog">Equipment logs preserved</label></div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="maint" [(ngModel)]="form.maintenance_docs_attached"><label class="form-check-label" for="maint">Maintenance records attached</label></div>
+          </div>
+          <div class="col-12">
+            <label class="form-label">If evidence is unavailable, explain why</label>
+            <input class="form-control" [(ngModel)]="form.evidence_unavailable_reason" placeholder="Reason evidence is unavailable…">
+          </div>
+        </div>
+      }
+
+      <!-- Step 6: Damage Map -->
+      @if (step() === 6) {
+        <h5 class="fw-semibold mb-4">Vehicle Damage Map</h5>
+        <p class="text-muted small mb-3">Click each damaged area to mark it. Select a zone to record damage type, severity, and notes.</p>
+        <app-car-wash-damage-diagram (zonesChanged)="onDamageChanged($event)"></app-car-wash-damage-diagram>
+      }
+
+      <!-- Step 7: Investigation -->
+      @if (step() === 7) {
+        <h5 class="fw-semibold mb-4">Initial Investigation</h5>
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Contributing Factors <span class="text-muted small">(select all that apply)</span></label>
+            <div class="row g-2 mt-1">
+              @for (f of contributingFactors; track f) {
+                <div class="col-md-4">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" [id]="'cf-' + f" [checked]="form.contributing_factors.includes(f)" (change)="toggleFactor(f)">
+                    <label class="form-check-label small" [for]="'cf-' + f">{{ f }}</label>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Suspected Root Cause</label>
+            <select class="form-select" [(ngModel)]="form.suspected_root_cause">
+              <option value="">Select…</option>
+              @for (rc of rootCauses; track rc) {
+                <option [value]="rc">{{ rc }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-12">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="injRep" [(ngModel)]="form.injury_reported">
+              <label class="form-check-label" for="injRep">Injury was reported by customer or witness</label>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Step 8: Review -->
+      @if (step() === 8) {
+        <h5 class="fw-semibold mb-4">Review &amp; Submit</h5>
+        <div class="row g-3 small">
+          <div class="col-md-6">
+            <div class="card p-3 bg-light">
+              <div class="fw-semibold mb-2">Customer</div>
+              <div>{{ form.customer_name }}</div>
+              <div>{{ form.customer_phone }}</div>
+              <div>{{ form.customer_email }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card p-3 bg-light">
+              <div class="fw-semibold mb-2">Vehicle</div>
+              <div>{{ form.vehicle_year }} {{ form.vehicle_make }} {{ form.vehicle_model }} ({{ form.vehicle_color }})</div>
+              <div>Plate: {{ form.vehicle_license_plate }} {{ form.vehicle_plate_state }}</div>
+              <div>Drivable: {{ form.vehicle_drivable ? 'Yes' : 'No' }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card p-3 bg-light">
+              <div class="fw-semibold mb-2">Site &amp; Equipment</div>
+              <div>{{ form.cw_site_name }}</div>
+              <div>Package: {{ form.wash_package }}</div>
+              <div>Occurred: {{ form.occurred_at }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card p-3 bg-light">
+              <div class="fw-semibold mb-2">Damage Zones</div>
+              @if ((form.damage_assessment | keyvalue).length) {
+                @for (z of form.damage_assessment | keyvalue; track z.key) {
+                  <div>• {{ z.value.label }}: {{ z.value.damageType }} ({{ z.value.severity }})</div>
+                }
+              } @else {
+                <div class="text-muted">No zones marked</div>
+              }
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="alert alert-warning py-2">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              Review all information above before submitting. This report will be sent to the site manager and claims team.
+            </div>
+          </div>
+        </div>
+      }
+
+    </div><!-- /card -->
+
+    <!-- Navigation -->
+    <div class="d-flex justify-content-between mt-4">
+      <button class="btn btn-outline-secondary" (click)="back()" [disabled]="step() === 1 || submitting()">
+        <i class="bi bi-arrow-left me-1"></i>Back
+      </button>
+      @if (step() < totalSteps) {
+        <button class="btn btn-primary" (click)="next()" [disabled]="!canAdvance()">
+          Next <i class="bi bi-arrow-right ms-1"></i>
+        </button>
+      } @else {
+        <button class="btn btn-success px-4" (click)="submit()" [disabled]="submitting()">
+          @if (submitting()) {
+            <span class="spinner-border spinner-border-sm me-2"></span>Submitting…
+          } @else {
+            <i class="bi bi-send me-2"></i>Submit Report
+          }
+        </button>
+      }
+    </div>
+  }
+</div>

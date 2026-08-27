@@ -1,0 +1,31 @@
+.zone-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: .5rem;
+}
+
+.zone-btn {
+  display: flex;
+  align-items: center;
+  gap: .375rem;
+  padding: .5rem .75rem;
+  border: 2px solid #dee2e6;
+  border-radius: .5rem;
+  background: #fff;
+  font-size: .8125rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all .15s;
+  width: 100%;
+
+  &:hover:not(.readonly) { border-color: #0057A8; background: #e8f0f9; }
+
+  &.selected {
+    border-color: #dc3545;
+    background: #fff5f5;
+    color: #dc3545;
+    font-weight: 600;
+  }
+
+  &.readonly { cursor: default; }
+}
