@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { SupabaseService } from '../../services/supabase.service';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-admin',
@@ -58,7 +59,7 @@ export class AdminComponent implements OnInit {
     if (!user_id || !name) { this.error.set('User ID and Name are required.'); this.saving.set(false); return; }
     const tempPass = Math.random().toString(36).slice(2, 10) + 'A1!';
     try {
-      const resp = await fetch(`${this.supa.client.supabaseUrl}/functions/v1/login`, {
+      const resp = await fetch(`${environment.supabaseUrl}/functions/v1/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'create', user_id, password: tempPass, name, email, role, site }),

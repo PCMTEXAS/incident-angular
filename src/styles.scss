@@ -7,10 +7,6 @@ $dc-blue-light: #e8f0f9;
 $primary: $dc-blue;
 $link-color: $dc-blue;
 
-@import 'bootstrap/scss/functions';
-@import 'bootstrap/scss/variables';
-@import 'bootstrap/scss/mixins';
-
 // Global
 *, *::before, *::after { box-sizing: border-box; }
 

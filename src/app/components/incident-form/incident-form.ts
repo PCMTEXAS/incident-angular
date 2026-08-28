@@ -14,7 +14,7 @@ import { Incident } from '../../models';
   styleUrl: './incident-form.scss',
 })
 export class IncidentFormComponent implements OnInit {
-  private auth = inject(AuthService);
+  protected auth = inject(AuthService);
   private supa = inject(SupabaseService);
   private router = inject(Router);
 

@@ -40,7 +40,7 @@ interface FormData {
   styleUrl: './car-wash-incident.scss',
 })
 export class CarWashIncidentComponent implements OnInit {
-  private auth = inject(AuthService);
+  protected auth = inject(AuthService);
   private supa = inject(SupabaseService);
   private router = inject(Router);
 
