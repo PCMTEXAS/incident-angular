@@ -46,8 +46,8 @@ export class AuthService {
 
     const res = await fetch(url, {
       headers: {
-        'apikey': environment.supabaseKey,
-        'Authorization': `Bearer ${environment.supabaseKey}`,
+        'apikey': environment.supabaseAnonKey,
+        'Authorization': `Bearer ${environment.supabaseAnonKey}`,
       },
     });
 
