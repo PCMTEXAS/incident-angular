@@ -16,37 +16,23 @@
     }
 
     <form (ngSubmit)="onSubmit()" #form="ngForm">
-      <div class="mb-3">
+      <div class="mb-4">
         <label class="form-label" for="userId">User ID</label>
         <input
           id="userId"
           type="text"
-          class="form-control"
+          class="form-control form-control-lg"
           [(ngModel)]="userId"
           name="userId"
           autocomplete="username"
-          placeholder="Enter your user ID"
-          [disabled]="loading()"
-          required>
-      </div>
-
-      <div class="mb-4">
-        <label class="form-label" for="password">Password</label>
-        <input
-          id="password"
-          type="password"
-          class="form-control"
-          [(ngModel)]="password"
-          name="password"
-          autocomplete="current-password"
-          placeholder="Enter your password"
+          placeholder="e.g. PATRICKSCHULTE"
           [disabled]="loading()"
           required>
       </div>
 
       <button
         type="submit"
-        class="btn btn-primary w-100 fw-semibold"
+        class="btn btn-primary w-100 fw-semibold btn-lg"
         [disabled]="loading()">
         @if (loading()) {
           <span class="spinner-border spinner-border-sm me-2"></span>Signing in…
@@ -57,7 +43,7 @@
     </form>
 
     <p class="text-center text-muted small mt-4 mb-0">
-      Contact your administrator to reset your password or create an account.
+      Contact your administrator to create or update your account.
     </p>
   </div>
 </div>

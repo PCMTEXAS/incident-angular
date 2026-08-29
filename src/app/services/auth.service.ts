@@ -1,10 +1,11 @@
 import { Injectable, NgZone, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AppUser } from '../models';
+import { environment } from '../../environments/environment';
 
 const SESSION_KEY = 'pcmhub_user';
 const AUTH_KEY = 'pcmhub_auth';
-const IDLE_MS = 30 * 60 * 1000; // 30 minutes
+const IDLE_MS = 30 * 60 * 1000;
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -39,25 +40,27 @@ export class AuthService {
     return r === 'admin' || r === 'manager';
   }
 
-  async login(userId: string, password: string, supabaseUrl: string): Promise<{ user: AppUser; isTempPassword: boolean }> {
-    const res = await fetch(`${supabaseUrl}/functions/v1/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId, password }),
+  async login(userId: string): Promise<AppUser> {
+    const uid = userId.trim().toUpperCase();
+    const url = `${environment.supabaseUrl}/rest/v1/app_users?user_id=eq.${encodeURIComponent(uid)}&is_active=eq.true&select=id,user_id,name,email,role,is_temp_password`;
+
+    const res = await fetch(url, {
+      headers: {
+        'apikey': environment.supabaseKey,
+        'Authorization': `Bearer ${environment.supabaseKey}`,
+      },
     });
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'Login failed' }));
-      throw new Error(err.error || 'Login failed');
-    }
+    if (!res.ok) throw new Error('Unable to reach server. Check your connection.');
 
-    const data = await res.json();
-    const user: AppUser = data.user;
+    const rows: AppUser[] = await res.json();
+    if (!rows.length) throw new Error('User ID not found. Contact your administrator.');
 
+    const user = rows[0];
     sessionStorage.setItem(AUTH_KEY, 'true');
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
     this.resetIdleTimer();
-    return { user, isTempPassword: !!data.is_temp_password };
+    return user;
   }
 
   logout(): void {
