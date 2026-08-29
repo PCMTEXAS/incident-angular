@@ -2,7 +2,6 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -17,26 +16,22 @@ export class LoginComponent {
   private route = inject(ActivatedRoute);
 
   userId = '';
-  password = '';
   loading = signal(false);
   error = signal('');
 
   async onSubmit() {
-    if (!this.userId || !this.password) {
-      this.error.set('Please enter your User ID and password.');
+    if (!this.userId.trim()) {
+      this.error.set('Please enter your User ID.');
       return;
     }
     this.loading.set(true);
     this.error.set('');
     try {
-      const { isTempPassword } = await this.auth.login(this.userId, this.password, environment.supabaseUrl);
-      if (isTempPassword) {
-        // TODO: redirect to password change
-      }
+      await this.auth.login(this.userId);
       const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
       this.router.navigateByUrl(returnUrl);
     } catch (err: any) {
-      this.error.set(err.message || 'Login failed. Please check your credentials.');
+      this.error.set(err.message || 'Login failed. Please try again.');
     } finally {
       this.loading.set(false);
     }
