@@ -1,7 +1,10 @@
-// PCMHub brand
-$dc-blue: #0057A8;
-$dc-blue-dark: #004080;
-$dc-blue-light: #e8f0f9;
+// DigitalChalk brand tokens (verified against live digitalchalk.com)
+$dc-purple:   #201A56;   // headline accents, secondary links
+$dc-blue:     #2CAAE1;   // primary CTA, links
+$dc-green:    #8BC541;   // secondary CTA, outcome accents
+$dc-bg-tint:  #EEF1F2;   // section backgrounds
+$dc-gray:     #898F91;   // muted text
+$dc-body:     #333333;   // body copy
 
 // Bootstrap overrides
 $primary: $dc-blue;
@@ -10,23 +13,25 @@ $link-color: $dc-blue;
 // Global
 *, *::before, *::after { box-sizing: border-box; }
 
-// DCDS2 design tokens
+// DC design tokens on :root
 :root {
-  --dc-font: 'Noto Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
-  --dc-blue: #0057A8;
-  --dc-blue-dark: #004080;
-  --dc-blue-light: #e8f0f9;
-  --dc-surface: #f4f6f9;
+  --dc-font: 'Source Sans 3', 'Helvetica Neue', Arial, sans-serif;
+  --dc-purple: #201A56;
+  --dc-blue: #2CAAE1;
+  --dc-green: #8BC541;
+  --dc-bg-tint: #EEF1F2;
+  --dc-gray: #898F91;
+  --dc-body: #333333;
+  --dc-surface: #f8f9fa;
   --dc-border: #dee2e6;
-  --dc-text: #1a1a2e;
-  --dc-text-muted: #6c757d;
-  --dc-radius: 0.75rem;
+  --dc-radius: 0.5rem;
+  --radius-pill: 999px;
 }
 
 body {
   font-family: var(--dc-font);
-  background: var(--dc-surface);
-  color: var(--dc-text);
+  background: var(--dc-bg-tint);
+  color: var(--dc-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -48,12 +53,12 @@ body {
   vertical-align: middle;
 }
 
-// Navbar
+// Navbar — DC purple header
 .navbar-pcm {
-  background: $dc-blue !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  background: $dc-purple !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.2);
   .navbar-brand { color: #fff !important; font-weight: 700; font-size: 1.25rem; }
-  .nav-link { color: rgba(255,255,255,.85) !important; }
+  .nav-link { color: rgba(255,255,255,.8) !important; }
   .nav-link:hover, .nav-link.active { color: #fff !important; }
 }
 
@@ -99,7 +104,7 @@ body {
     &.active {
       border-color: $dc-blue;
       color: $dc-blue;
-      background: $dc-blue-light;
+      background: rgba($dc-blue, 0.1);
       .step-num { background: $dc-blue; color: #fff; }
     }
 
@@ -149,20 +154,30 @@ body {
 .sla-over  { color: #dc3545; }
 
 // Tables
-.table-hover tbody tr:hover { background: $dc-blue-light; cursor: pointer; }
+.table-hover tbody tr:hover { background: rgba($dc-blue, 0.06); cursor: pointer; }
 
-// Buttons
-.btn-primary { background: $dc-blue; border-color: $dc-blue; }
-.btn-primary:hover { background: $dc-blue-dark; border-color: $dc-blue-dark; }
+// Buttons — DC pill shape
+.btn-primary {
+  background: $dc-blue; border-color: $dc-blue;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+}
+.btn-primary:hover { background: darken($dc-blue, 8%); border-color: darken($dc-blue, 8%); }
+.btn-secondary { border-radius: var(--radius-pill); font-weight: 600; }
+.btn-outline-primary { border-radius: var(--radius-pill); color: $dc-blue; border-color: $dc-blue; }
+.btn-outline-primary:hover { background: $dc-blue; border-color: $dc-blue; }
+.btn-success { background: $dc-green; border-color: $dc-green; border-radius: var(--radius-pill); font-weight: 600; }
 
 // Form
 .form-label { font-weight: 500; margin-bottom: .25rem; }
 .required::after { content: ' *'; color: #dc3545; }
 
 // Utilities
-.text-blue { color: $dc-blue !important; }
+.text-blue  { color: $dc-blue !important; }
+.text-purple { color: $dc-purple !important; }
 .bg-blue    { background: $dc-blue !important; }
-.bg-blue-light { background: $dc-blue-light !important; }
+.bg-purple  { background: $dc-purple !important; }
+.bg-tint    { background: $dc-bg-tint !important; }
 
 // Scrollable table wrapper
 .table-wrapper { overflow-x: auto; }
