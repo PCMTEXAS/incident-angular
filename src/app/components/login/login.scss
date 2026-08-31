@@ -1,9 +1,87 @@
 .login-page {
-  background: linear-gradient(135deg, #0057A8 0%, #003d7a 100%);
-  padding: 1rem;
+  background: var(--dc-surface);
+}
+
+// Left brand panel — DC blue gradient
+.brand-panel {
+  width: 420px;
+  min-width: 380px;
+  background: linear-gradient(160deg, #0057A8 0%, #003566 100%);
+  padding: 3rem 2.5rem;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.dc-logo {
+  width: 220px;
+  height: auto;
+}
+
+.brand-tagline {
+  font-size: 1rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.75);
+  letter-spacing: 0.04em;
+  text-align: center;
+  margin: 0;
+}
+
+.brand-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+
+  li {
+    display: flex;
+    align-items: center;
+    font-size: 0.9375rem;
+    color: rgba(255, 255, 255, 0.88);
+
+    .ms {
+      color: #7dd3f8;
+      font-size: 1.125rem;
+    }
+  }
+}
+
+// Right login panel
+.login-panel {
+  padding: 2rem 1rem;
+  background: var(--dc-surface);
 }
 
 .login-card {
-  border-radius: 1rem;
-  border: none;
+  width: 100%;
+  max-width: 440px;
+  border-radius: var(--dc-radius);
+  border: 1px solid var(--dc-border);
+
+  // DCDS2-style input with left icon
+  .input-group-text {
+    border-color: var(--dc-border);
+    border-right: none;
+  }
+
+  .form-control {
+    border-color: var(--dc-border);
+
+    &:focus {
+      border-color: var(--dc-blue);
+      box-shadow: 0 0 0 0.2rem rgba(0, 87, 168, 0.15);
+    }
+  }
+
+  .btn-primary {
+    background: var(--dc-blue);
+    border-color: var(--dc-blue);
+    letter-spacing: 0.02em;
+
+    &:hover:not(:disabled) {
+      background: var(--dc-blue-dark);
+      border-color: var(--dc-blue-dark);
+    }
+  }
 }

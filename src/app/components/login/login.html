@@ -1,49 +1,73 @@
-<div class="login-page d-flex align-items-center justify-content-center min-vh-100">
-  <div class="login-card card p-4 p-md-5 shadow-lg" style="width: 100%; max-width: 420px;">
-    <div class="text-center mb-4">
-      <div class="login-logo mb-3">
-        <i class="bi bi-shield-check text-blue" style="font-size: 2.5rem;"></i>
-      </div>
-      <h1 class="h4 fw-bold text-blue mb-1">PCMHub</h1>
-      <p class="text-muted small mb-0">Incident Management Platform</p>
-    </div>
+<div class="login-page d-flex min-vh-100">
 
-    @if (error()) {
-      <div class="alert alert-danger py-2 small d-flex align-items-center gap-2">
-        <i class="bi bi-exclamation-circle-fill"></i>
-        {{ error() }}
-      </div>
-    }
-
-    <form (ngSubmit)="onSubmit()" #form="ngForm">
-      <div class="mb-4">
-        <label class="form-label" for="userId">User ID</label>
-        <input
-          id="userId"
-          type="text"
-          class="form-control form-control-lg"
-          [(ngModel)]="userId"
-          name="userId"
-          autocomplete="username"
-          placeholder="e.g. PATRICKSCHULTE"
-          [disabled]="loading()"
-          required>
-      </div>
-
-      <button
-        type="submit"
-        class="btn btn-primary w-100 fw-semibold btn-lg"
-        [disabled]="loading()">
-        @if (loading()) {
-          <span class="spinner-border spinner-border-sm me-2"></span>Signing in…
-        } @else {
-          <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
-        }
-      </button>
-    </form>
-
-    <p class="text-center text-muted small mt-4 mb-0">
-      Contact your administrator to create or update your account.
-    </p>
+  <!-- Left brand panel -->
+  <div class="brand-panel d-none d-lg-flex flex-column align-items-center justify-content-center">
+    <img src="assets/dc-logo.svg" alt="DigitalChalk" class="dc-logo mb-4">
+    <p class="brand-tagline">Safety &amp; Incident Management</p>
+    <ul class="brand-features mt-4">
+      <li><span class="ms me-2">verified</span>OSHA-compliant reporting</li>
+      <li><span class="ms me-2">timeline</span>Real-time incident tracking</li>
+      <li><span class="ms me-2">shield</span>Secure &amp; role-based access</li>
+    </ul>
   </div>
+
+  <!-- Right login panel -->
+  <div class="login-panel d-flex align-items-center justify-content-center flex-grow-1">
+    <div class="login-card card p-4 p-md-5 shadow-lg">
+
+      <!-- Mobile logo -->
+      <div class="d-lg-none text-center mb-4">
+        <img src="assets/dc-logo-dark.svg" alt="DigitalChalk" style="height: 48px;">
+      </div>
+
+      <div class="mb-4">
+        <h1 class="h4 fw-bold mb-1" style="color: var(--dc-blue);">Sign In</h1>
+        <p class="text-muted small mb-0">Enter your User ID to access PCMHub</p>
+      </div>
+
+      @if (error()) {
+        <div class="alert alert-danger py-2 small d-flex align-items-center gap-2">
+          <span class="ms" style="font-size:1rem;">error</span>
+          {{ error() }}
+        </div>
+      }
+
+      <form (ngSubmit)="onSubmit()" #form="ngForm">
+        <div class="mb-4">
+          <label class="form-label fw-medium" for="userId">User ID</label>
+          <div class="input-group input-group-lg">
+            <span class="input-group-text bg-white border-end-0">
+              <span class="ms" style="font-size:1.25rem;color:var(--dc-blue);">person</span>
+            </span>
+            <input
+              id="userId"
+              type="text"
+              class="form-control border-start-0"
+              [(ngModel)]="userId"
+              name="userId"
+              autocomplete="username"
+              placeholder="e.g. PATRICKSCHULTE"
+              [disabled]="loading()"
+              required>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          class="btn btn-primary w-100 fw-semibold btn-lg"
+          [disabled]="loading()">
+          @if (loading()) {
+            <span class="spinner-border spinner-border-sm me-2"></span>Signing in…
+          } @else {
+            <span class="ms me-2" style="font-size:1.25rem;vertical-align:middle;">login</span>Sign In
+          }
+        </button>
+      </form>
+
+      <p class="text-center text-muted small mt-4 mb-0">
+        Contact your administrator to create or update your account.
+      </p>
+    </div>
+  </div>
+
 </div>
